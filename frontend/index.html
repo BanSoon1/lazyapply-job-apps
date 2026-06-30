@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LazyApply — Find jobs fast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens ============ */
+  :root{
+    --bg:#F8F9FB;
+    --card:#FFFFFF;
+    --accent:#4F46E5;
+    --accent-hover:#4338CA;
+    --accent-soft:#EEF2FF;
+    --accent-gradient:linear-gradient(135deg,#4F46E5 0%,#6366F1 100%);
+    --text-primary:#111827;
+    --text-secondary:#6B7280;
+    --text-muted:#9CA3AF;
+    --border:rgba(17,24,39,0.09);
+    --success:#15803D;
+    --success-soft:#ECFDF3;
+    --warning:#B45309;
+    --warning-soft:#FFFBEB;
+    --danger:#B91C1C;
+    --danger-soft:#FEF2F2;
+    --radius-sm:6px;
+    --radius:10px;
+    --ease:cubic-bezier(0.4,0,0.2,1);
+    --shadow-sm:0 1px 2px rgba(17,24,39,0.04);
+    --shadow-hover:0 1px 2px rgba(17,24,39,0.04), 0 10px 24px rgba(17,24,39,0.09);
+    --space-1:8px;
+    --space-2:16px;
+    --space-3:24px;
+    --space-4:32px;
+  }
+  [data-theme="dark"]{
+    --bg:#0B1220;
+    --card:#1A2436;
+    --accent:#6366F1;
+    --accent-hover:#7C7FF2;
+    --accent-soft:rgba(99,102,241,0.16);
+    --accent-gradient:linear-gradient(135deg,#6366F1 0%,#818CF8 100%);
+    --text-primary:#F8FAFC;
+    --text-secondary:#CBD5E1;
+    --text-muted:#7C8AA5;
+    --border:rgba(255,255,255,0.09);
+    --success:#34D399;
+    --success-soft:rgba(52,211,153,0.13);
+    --warning:#FBBF24;
+    --warning-soft:rgba(251,191,36,0.13);
+    --danger:#F87171;
+    --danger-soft:rgba(248,113,113,0.13);
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
+    --shadow-hover:0 1px 2px rgba(0,0,0,0.3), 0 12px 28px rgba(0,0,0,0.5);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+    transition:background .2s var(--ease),color .2s var(--ease);
+  }
+  h1,h2,h3{
+    font-family:'Poppins',sans-serif;
+    font-weight:600;
+    margin:0;
+    color:var(--text-primary);
+  }
+  h1{font-size:32px;letter-spacing:-0.025em;line-height:1.15;}
+  h2{font-size:20px;}
+  h3{font-size:16px;}
+  p{margin:0;}
+  button{font-family:inherit;}
+  a{color:inherit;}
+  ::selection{background:var(--accent-soft);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}
+  }
+
+  /* ============ Layout shell ============ */
+  .container{max-width:1180px;margin:0 auto;padding:0 var(--space-3);}
+
+  .topbar{
+    position:sticky;top:0;z-index:30;
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar-inner{
+    max-width:1180px;margin:0 auto;padding:0 var(--space-3);
+    height:60px;display:flex;align-items:center;gap:var(--space-3);
+  }
+  .logo{
+    display:flex;align-items:center;gap:8px;
+    font-family:'Poppins',sans-serif;font-weight:600;font-size:17px;
+    cursor:pointer;white-space:nowrap;color:var(--text-primary);
+    background:none;border:none;
+  }
+  .logo-mark{
+    width:26px;height:26px;border-radius:7px;background:var(--accent-gradient);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:14px;flex:none;box-shadow:0 2px 8px rgba(79,70,229,0.35);
+  }
+  .navlinks{display:flex;gap:4px;margin-left:8px;flex:1;}
+  .navlink{
+    border:none;background:none;color:var(--text-secondary);
+    font-size:14px;font-weight:500;padding:8px 12px;border-radius:var(--radius-sm);
+    cursor:pointer;display:flex;align-items:center;gap:6px;
+    transition:background .15s var(--ease),color .15s var(--ease);
+  }
+  .navlink:hover{background:var(--bg);color:var(--text-primary);}
+  .navlink.active{color:var(--accent);background:var(--accent-soft);}
+  .navbadge{
+    background:var(--text-muted);color:#fff;border-radius:999px;
+    font-size:11px;padding:1px 6px;min-width:16px;text-align:center;
+  }
+  .navlink.active .navbadge{background:var(--accent);}
+  .icon-btn{
+    border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
+    width:34px;height:34px;border-radius:var(--radius-sm);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex:none;
+    transition:border-color .15s var(--ease),color .15s var(--ease),transform .12s var(--ease);
+  }
+  .icon-btn:hover{border-color:var(--text-muted);color:var(--text-primary);}
+  .icon-btn:active{transform:scale(0.93);}
+  .navmenu-toggle{display:none;}
+
+  /* ============ Search + filter bar ============ */
+  .searchbar-wrap{
+    background:var(--card);border-bottom:1px solid var(--border);
+    position:sticky;top:60px;z-index:20;
+  }
+  .searchbar-inner{
+    max-width:1180px;margin:0 auto;padding:var(--space-2) var(--space-3);
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+  }
+  .search-input{
+    flex:1 1 280px;display:flex;align-items:center;gap:8px;
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:0 12px;height:38px;
+  }
+  .search-input svg{flex:none;color:var(--text-muted);}
+  .search-input input{
+    border:none;background:transparent;outline:none;color:var(--text-primary);
+    font-size:14px;width:100%;height:100%;
+  }
+  .search-input input::placeholder{color:var(--text-muted);}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;}
+  select{
+    height:38px;border:1px solid var(--border);background:var(--card);
+    color:var(--text-primary);border-radius:var(--radius-sm);padding:0 10px;
+    font-size:13px;cursor:pointer;font-family:inherit;
+  }
+
+  .main{max-width:1180px;margin:0 auto;padding:var(--space-3);}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ============ Buttons ============ */
+  .btn{
+    border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+    padding:7px 14px;cursor:pointer;border:1px solid transparent;
+    display:inline-flex;align-items:center;gap:6px;line-height:1.2;
+    transition:transform .12s var(--ease),background .15s var(--ease),border-color .15s var(--ease),box-shadow .15s var(--ease);
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{background:var(--accent-gradient);color:#fff;box-shadow:0 1px 2px rgba(79,70,229,0.25);}
+  .btn-primary:hover{box-shadow:0 4px 12px rgba(79,70,229,0.35);}
+  .btn-secondary{background:var(--card);color:var(--text-primary);border-color:var(--border);}
+  .btn-secondary:hover{border-color:var(--text-muted);}
+  .btn-save{background:var(--card);color:var(--text-secondary);border-color:var(--border);}
+  .btn-save:hover{border-color:var(--text-muted);color:var(--text-primary);}
+  .btn-save.saved{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+  .btn-save.pop{animation:savePop .32s var(--ease);}
+  @keyframes savePop{0%{transform:scale(1);}45%{transform:scale(1.12);}100%{transform:scale(1);}}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+
+  /* ============ Home page ============ */
+  .home-intro{padding:var(--space-2) 0 var(--space-4) 0;}
+  .home-intro h1{margin-bottom:6px;}
+  .home-intro p{color:var(--text-secondary);font-size:15px;}
+  .source-trust-row{
+    display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:18px;
+  }
+  .source-trust-label{font-size:12px;color:var(--text-muted);font-weight:500;}
+  .source-chip{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    color:var(--text-secondary);background:var(--card);border:1px solid var(--border);
+    border-radius:999px;padding:5px 11px 5px 8px;
+  }
+  .section-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    margin-bottom:var(--space-2);
+  }
+  .section-head .count{color:var(--text-muted);font-size:13px;font-weight:500;}
+
+  .job-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);
+  }
+
+  /* ============ Job card ============ */
+  .job-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:var(--space-2);cursor:pointer;
+    transition:box-shadow .18s var(--ease),border-color .18s var(--ease),transform .18s var(--ease);
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .job-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px);}
+  .job-card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .job-card-top{display:flex;justify-content:space-between;gap:8px;}
+  .job-card-id{display:flex;gap:10px;min-width:0;}
+  .avatar-wrap{position:relative;flex:none;}
+  .avatar-sm{
+    width:32px;height:32px;border-radius:8px;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;
+    font-weight:600;font-size:11px;flex:none;
+  }
+  .source-badge{
+    position:absolute;bottom:-4px;right:-4px;width:16px;height:16px;border-radius:5px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:7px;font-weight:700;color:#fff;border:2px solid var(--card);
+    line-height:1;letter-spacing:0;
+  }
+  .source-dot{
+    display:inline-block;width:6px;height:6px;border-radius:50%;flex:none;
+  }
+  .job-card h3{margin-bottom:2px;}
+  .job-company{color:var(--text-secondary);font-size:13px;font-weight:500;}
+  .mini-ring{
+    width:36px;height:36px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    background:conic-gradient(var(--ring-color) calc(var(--pct)*1%), var(--border) 0);
+  }
+  .mini-ring-inner{
+    width:28px;height:28px;border-radius:50%;background:var(--card);
+    display:flex;align-items:center;justify-content:center;color:var(--text-primary);
+    font-family:'Poppins',sans-serif;font-weight:600;font-size:10px;
+  }
+  .mini-ring.match-high{--ring-color:var(--success);}
+  .mini-ring.match-mid{--ring-color:var(--accent);}
+  .mini-ring.match-low{--ring-color:var(--warning);}
+  .mini-ring.locked{background:var(--border);cursor:pointer;}
+  .mini-ring.locked .mini-ring-inner{color:var(--text-muted);}
+
+  .job-meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--text-secondary);font-size:13px;}
+  .job-meta span{display:flex;align-items:center;gap:5px;}
+  .job-meta svg{color:var(--text-muted);flex:none;}
+  .job-salary{font-weight:700;color:var(--text-primary);font-size:14px;}
+  .job-tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{
+    font-size:12px;color:var(--text-secondary);background:var(--bg);
+    border:1px solid var(--border);border-radius:999px;padding:2px 9px;
+  }
+  .job-posted{color:var(--text-muted);font-size:12px;display:inline-flex;align-items:center;gap:5px;}
+
+  .job-card-bottom{
+    display:flex;align-items:center;justify-content:space-between;
+    padding-top:10px;border-top:1px solid var(--border);
+  }
+  .job-card-actions{display:flex;gap:8px;}
+
+  /* ============ Skeletons ============ */
+  .skeleton{
+    background:linear-gradient(90deg, var(--border) 25%, rgba(127,127,127,0.18) 37%, var(--border) 63%);
+    background-size:400% 100%;
+    animation:shimmer 1.4s ease infinite;
+    border-radius:4px;
+  }
+  @keyframes shimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+  .skel-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:var(--space-2);display:flex;flex-direction:column;gap:10px;
+  }
+  .skel-line{height:12px;}
+
+  /* ============ Search results layout ============ */
+  .search-layout{display:grid;grid-template-columns:1fr 360px;gap:var(--space-3);align-items:start;}
+  .job-list{display:flex;flex-direction:column;gap:var(--space-2);}
+   .ai-panel-col{position:sticky;top:128px;max-height:calc(100vh - 150px);overflow-y:auto;scrollbar-width:thin;}
+  .ai-panel{overflow-y:auto;max-height:calc(100vh - 160px);}
+
+  /* ============ AI panel ============ */
+  .ai-panel{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:var(--space-3);display:flex;flex-direction:column;gap:var(--space-3);
+  }
+  .ai-panel-label{
+    font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .score-row{display:flex;align-items:center;gap:var(--space-2);}
+  .score-ring{
+    width:64px;height:64px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Poppins',sans-serif;font-weight:600;font-size:16px;
+    background:conic-gradient(var(--accent) calc(var(--pct) * 1%), var(--border) 0);
+    box-shadow:0 0 0 5px var(--accent-soft);
+  }
+  .score-ring-inner{
+    width:50px;height:50px;border-radius:50%;background:var(--card);
+    display:flex;align-items:center;justify-content:center;color:var(--text-primary);
+  }
+  .score-text h3{margin-bottom:2px;}
+  .score-text p{color:var(--text-secondary);font-size:13px;}
+  .ai-source-row{
+    display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:8px 10px;
+  }
+  .ai-source-row strong{color:var(--text-primary);font-weight:600;}
+  .ai-source-link{
+    margin-left:auto;color:var(--accent);font-weight:600;font-size:12px;
+    text-decoration:none;white-space:nowrap;
+  }
+  .ai-source-link:hover{text-decoration:underline;}
+  .chip-group{display:flex;flex-direction:column;gap:6px;}
+  .chip-label{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-size:12px;border-radius:999px;padding:4px 10px;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
+  .chip-ok{background:var(--success-soft);color:var(--success);}
+  .chip-missing{background:var(--danger-soft);color:var(--danger);}
+  .reco-list{display:flex;flex-direction:column;gap:8px;}
+  .reco-item{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+    cursor:pointer;background:var(--bg);
+    transition:border-color .15s var(--ease),transform .15s var(--ease);
+  }
+  .reco-item:hover{border-color:var(--accent);transform:translateX(2px);}
+  .reco-item .t{font-size:13px;font-weight:500;color:var(--text-primary);}
+  .reco-item .c{font-size:12px;color:var(--text-muted);}
+  .reco-pct{font-size:12px;font-weight:700;color:var(--accent);}
+  .divider{height:1px;background:var(--border);}
+
+  /* ============ AI Match page ============ */
+  .ai-page-head{margin-bottom:var(--space-3);}
+  .ai-page-head p{color:var(--text-secondary);margin-top:4px;font-size:14px;}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:var(--space-3);
+  }
+  .card + .card{margin-top:var(--space-2);}
+  .ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-top:var(--space-2);}
+  .skillbar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .skillbar-row:last-child{margin-bottom:0;}
+  .skillbar-name{width:120px;flex:none;font-size:13px;font-weight:500;color:var(--text-primary);}
+  .skillbar-track{flex:1;height:8px;border-radius:999px;background:var(--bg);border:1px solid var(--border);overflow:hidden;}
+  .skillbar-fill{height:100%;border-radius:999px;background:var(--accent-gradient);transition:width .5s var(--ease);}
+  .skillbar-fill.low{background:var(--warning);}
+  .skillbar-pct{width:38px;flex:none;text-align:right;font-size:13px;font-weight:600;color:var(--text-secondary);}
+  .match-results-list{display:flex;flex-direction:column;gap:8px;}
+  .match-result-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+    cursor:pointer;transition:border-color .15s var(--ease),transform .15s var(--ease);
+  }
+  .match-result-row:hover{border-color:var(--accent);transform:translateX(2px);}
+  .suggestion-list{display:flex;flex-direction:column;gap:10px;}
+  .suggestion-item{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-primary);}
+  .suggestion-dot{
+    width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex:none;
+  }
+
+  /* ============ Saved / empty state ============ */
+  .empty-state{
+    text-align:center;padding:60px 20px;color:var(--text-secondary);
+    background:var(--card);border:1px dashed var(--border);border-radius:var(--radius);
+  }
+  .empty-state h3{margin-bottom:6px;color:var(--text-primary);}
+  .empty-state p{font-size:13px;margin-bottom:16px;}
+
+  /* ============ Profile page ============ */
+  .profile-card{display:flex;gap:var(--space-3);align-items:flex-start;flex-wrap:wrap;}
+  .avatar{
+    width:64px;height:64px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;
+    font-weight:600;font-size:22px;flex:none;
+  }
+  .profile-info h2{margin-bottom:2px;}
+  .profile-info .role{color:var(--text-secondary);font-size:14px;margin-bottom:2px;}
+  .profile-info .loc{color:var(--text-muted);font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:5px;}
+  .skill-chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* ============ Auth / gating UI ============ */
+  .nav-lock{display:inline-flex;vertical-align:middle;margin-left:4px;color:var(--text-muted);}
+  .auth-area{display:flex;align-items:center;}
+  .user-chip{
+    display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--border);
+    border-radius:999px;padding:3px 12px 3px 3px;cursor:pointer;font-size:13px;font-weight:600;
+    color:var(--text-primary);transition:border-color .15s var(--ease);
+  }
+  .user-chip:hover{border-color:var(--text-muted);}
+  .user-chip .avatar-sm{width:24px;height:24px;font-size:9px;border-radius:50%;}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(17,24,39,0.55);backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;
+    opacity:0;pointer-events:none;transition:opacity .2s var(--ease);
+  }
+  .modal-overlay.open{opacity:1;pointer-events:auto;}
+  .modal-card{
+    position:relative;background:var(--card);border-radius:var(--radius);
+    padding:32px 28px 24px;max-width:380px;width:100%;box-shadow:var(--shadow-hover);
+    transform:translateY(10px) scale(0.97);transition:transform .2s var(--ease);
+  }
+  .modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+  .modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;}
+  .modal-icon{
+    width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+  }
+  .modal-card h3{margin-bottom:6px;}
+  .modal-sub{color:var(--text-secondary);font-size:13px;line-height:1.6;margin-bottom:18px;}
+  .modal-benefits{display:flex;flex-direction:column;gap:9px;margin-bottom:22px;}
+  .modal-benefit{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--text-primary);}
+  .modal-actions{display:flex;flex-direction:column;gap:8px;}
+  .modal-disclaimer{font-size:11px;color:var(--text-muted);text-align:center;margin-top:14px;}
+
+  .locked-card{
+    text-align:center;padding:44px 24px;background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);max-width:420px;margin:0 auto;
+  }
+  .locked-card.compact{padding:24px 16px;max-width:none;}
+  .locked-icon{
+    width:44px;height:44px;border-radius:13px;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
+  }
+  .locked-card h3{margin-bottom:8px;}
+  .locked-card p{color:var(--text-secondary);font-size:13px;margin-bottom:20px;line-height:1.6;}
+
+  .teaser-wrap{position:relative;}
+  .teaser-blur{filter:blur(4px);user-select:none;pointer-events:none;opacity:0.75;}
+  .teaser-overlay{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;gap:10px;padding:16px;
+  }
+  .teaser-overlay .locked-icon{margin-bottom:0;}
+  .teaser-overlay p{font-size:13px;font-weight:600;color:var(--text-primary);max-width:220px;margin:0;}
+
+  .resume-upload{
+    border:1.5px dashed var(--border);border-radius:var(--radius);padding:28px 16px;
+    text-align:center;cursor:pointer;transition:border-color .15s var(--ease),background .15s var(--ease);
+  }
+  .resume-upload:hover{border-color:var(--accent);background:var(--accent-soft);}
+  .resume-upload svg{color:var(--text-muted);margin-bottom:8px;}
+  .resume-upload p{font-size:13px;color:var(--text-primary);margin-bottom:4px;}
+  .resume-upload.uploaded{border-style:solid;border-color:var(--success);background:var(--success-soft);}
+  .resume-upload.uploaded svg{color:var(--success);}
+
+  .pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .pref-field label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;font-weight:500;}
+  .pref-field select{width:100%;}
+  .skill-chip{
+    font-size:12px;background:var(--bg);border:1px solid var(--border);
+    border-radius:999px;padding:4px 11px;color:var(--text-secondary);
+  }
+
+  /* ============ Responsive ============ */
+  @media (max-width:980px){
+    .job-grid{grid-template-columns:1fr;}
+    .search-layout{grid-template-columns:1fr;}
+    .ai-panel-col{position:static;order:-1;}
+    .ai-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:680px){
+    .navlinks{
+      position:fixed;top:60px;left:0;right:0;background:var(--card);
+      border-bottom:1px solid var(--border);flex-direction:column;padding:8px;
+      display:none;gap:2px;z-index:25;
+    }
+    .navlinks.open{display:flex;}
+    .navmenu-toggle{display:flex;}
+    .logo{flex:1;}
+    .navlink{width:100%;justify-content:flex-start;}
+    .searchbar-wrap{position:static;}
+    .topbar{position:sticky;}
+    .score-row{flex-wrap:wrap;}
+    .pref-grid{grid-template-columns:1fr;}
+    .user-chip-name{display:none;}
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <button class="logo" data-nav="home" aria-label="LazyApply home">
+      <span class="logo-mark">⚡</span>LazyApply
+    </button>
+    <nav class="navlinks" id="navLinks">
+      <button class="navlink" data-nav="home">Jobs</button>
+      <button class="navlink" data-nav="ai">AI Match<span class="nav-lock" id="lockAi"></span></button>
+      <button class="navlink" data-nav="saved">Saved Jobs <span class="navbadge" id="savedCount">0</span><span class="nav-lock" id="lockSaved"></span></button>
+      <button class="navlink" data-nav="profile">Profile<span class="nav-lock" id="lockProfile"></span></button>
+    </nav>
+    <div class="auth-area" id="authArea"></div>
+    <button class="icon-btn navmenu-toggle" id="navMenuToggle" aria-label="Open menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode">
+      <svg id="themeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="searchbar-wrap" id="searchbarWrap">
+  <div class="searchbar-inner">
+    <div class="search-input">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search job title or company…">
+    </div>
+    <div class="filters">
+      <select id="filterLocation"><option value="">Location</option></select>
+      <select id="filterSalary"><option value="">Salary</option></select>
+      <select id="filterType"><option value="">Job Type</option></select>
+      <select id="filterRemote"><option value="">Remote</option></select>
+      <select id="filterSource"><option value="">Source</option></select>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+
+  <!-- HOME -->
+  <section id="page-home" class="page active">
+    <div class="home-intro">
+      <h1>Find your next role in seconds.</h1>
+      <p>Search, filter, and see your AI match score before you ever open a job.</p>
+      <div class="source-trust-row" id="sourceTrustRow">
+        <span class="source-trust-label">Aggregating live from</span>
+      </div>
+    </div>
+    <div class="section-head">
+      <h2>Latest Jobs</h2>
+      <span class="count" id="homeCount"></span>
+    </div>
+    <div class="job-grid" id="homeJobGrid"></div>
+  </section>
+
+  <!-- SEARCH RESULTS -->
+  <section id="page-search" class="page">
+    <div class="section-head">
+      <h2 id="searchHeading">Search results</h2>
+      <span class="count" id="searchCount"></span>
+    </div>
+    <div class="search-layout">
+      <div class="job-list" id="searchJobList"></div>
+      <aside class="ai-panel-col">
+        <div class="ai-panel" id="aiPanel"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- AI MATCH PAGE -->
+  <section id="page-ai" class="page">
+    <div class="ai-page-head">
+      <h1>Your AI Resume Analysis</h1>
+      <p>Based on your profile, here's how you stack up — and what to fix next.</p>
+    </div>
+    <div id="aiLockedContent" style="display:none;"></div>
+    <div id="aiRealContent">
+      <div class="card">
+        <h3>Skills Breakdown</h3>
+        <div id="skillsBreakdown" style="margin-top:16px;"></div>
+      </div>
+      <div class="ai-grid">
+        <div class="card">
+          <h3>Top Matching Roles</h3>
+          <div class="match-results-list" id="matchResultsList" style="margin-top:14px;"></div>
+        </div>
+        <div class="card">
+          <h3>Suggested Improvements</h3>
+          <div class="suggestion-list" id="suggestionList" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAVED JOBS -->
+  <section id="page-saved" class="page">
+    <div class="section-head">
+      <h2>Saved Jobs</h2>
+      <span class="count" id="savedPageCount"></span>
+    </div>
+    <div class="job-grid" id="savedJobGrid"></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="page-profile" class="page">
+    <div class="section-head"><h2>Profile</h2></div>
+    <div id="profileLockedContent" style="display:none;"></div>
+    <div id="profileRealContent">
+      <div class="card profile-card">
+        <div class="avatar" id="profileAvatar">AT</div>
+        <div class="profile-info">
+        <h2 id="profileName">Alex Tan</h2>
+          <p class="role" id="profileEmail">Aspiring Backend Developer</p>
+          <p class="loc">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Johor Bahru, Malaysia
+          </p>
+          <div class="skill-chip-row" id="profileSkillChips"></div>
+          <button class="btn btn-primary btn-sm" data-nav="ai" style="margin-top:16px;">View AI Match Analysis</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Resume</h3>
+        <div class="resume-upload" id="resumeUpload">
+          <input type="file" id="resumeFileInput" accept=".pdf,.doc,.docx" style="display:none;">
+          <div id="resumeUploadInner">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p><strong>Click to upload</strong> or drag your resume here</p>
+            <span class="job-posted" style="justify-content:center;">PDF or DOCX, up to 5MB</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Job Preferences</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin:6px 0 14px;">Used to power your AI recommendations.</p>
+        <div class="pref-grid">
+          <div class="pref-field"><label for="prefLocation">Preferred Location</label><select id="prefLocation"></select></div>
+          <div class="pref-field"><label for="prefSalary">Expected Salary</label><select id="prefSalary"></select></div>
+          <div class="pref-field"><label for="prefType">Job Type</label><select id="prefType"></select></div>
+          <div class="pref-field"><label for="prefRemote">Remote</label><select id="prefRemote"></select></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="savePrefsBtn" style="margin-top:16px;">Save Preferences</button>
+        <span class="job-posted" id="prefSavedMsg" style="margin-left:10px;display:none;">✔ Preferences saved</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card">
+    <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    </div>
+    <h3 id="modalTitle">Sign in to LazyApply</h3>
+    <p class="modal-sub" id="modalSub">Create a free account to unlock the full experience.</p>
+    <div class="modal-benefits">
+      <div class="modal-benefit"><span style="color:var(--success);">✔</span> Save jobs from LinkedIn, JobStreet & more</div>
+      <div class="modal-benefit"><span style="color:var(--success);">✔</span> Get your AI resume match score</div>
+      <div class="modal-benefit"><span style="color:var(--success);">✔</span> Set preferences & get recommendations</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="modalContinueBtn" style="justify-content:center;">Continue (Demo)</button>
+      <button class="btn btn-secondary" id="modalGuestBtn" style="justify-content:center;">Continue browsing as guest</button>
+    </div>
+    <p class="modal-disclaimer">Prototype demo — no real account is created.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  /* ============ Mock data ============ */
+  const candidate = {
+    name: "Alex Tan",
+    skills: {
+      "Python":90, "SQL":82, "Data Analysis":85, "JavaScript":75, "React":68,
+      "Communication":88, "Excel":60, "Node.js":55,
+      "AWS":32, "Docker":28, "System Design":40, "Kubernetes":15, "Java":20, "Go":10
+    }
+  };
+
+  const SUGGESTION_COPY = {
+    "AWS":"Get hands-on with AWS — start with EC2, S3, and IAM basics.",
+    "Docker":"Learn Docker fundamentals to round out your DevOps skills.",
+    "System Design":"Practice system design — scalability, caching, and database patterns.",
+    "Kubernetes":"Explore container orchestration with Kubernetes.",
+    "Java":"Brush up on core Java for backend-heavy roles.",
+    "Go":"Pick up Go basics — several backend roles list it as a plus."
+  };
+
+  const SOURCES = {
+    "LinkedIn":     { mono:"in", color:"#0A66C2" },
+    "JobStreet":    { mono:"JS", color:"#E2562E" },
+    "Indeed":       { mono:"Id", color:"#2164F3" },
+    "Glassdoor":    { mono:"Gd", color:"#0CAA41" },
+    "Company Site": { mono:"Co", color:"#6B7280" },
+    "RemoteOK":     { mono:"RO", color:"#16a34a" },
+    "The Muse":     { mono:"TM", color:"#9333EA" },
+    "JSearch":      { mono:"JS", color:"#F59E0B" },
+    "Adzuna":       { mono:"Az", color:"#EF4444" },
+  };
+  const SOURCE_ORDER = Object.keys(SOURCES);
+
+  let jobs = [];
+
+  async function loadJobs(query = "") {
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/jobs/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      jobs = data.jobs.map(j => ({
+        id:         j.job_id,
+        title:      j.title,
+        company:    j.company,
+        location:   j.location   || "Remote",
+        salaryMin:  j.salaryMin  || 0,
+        salaryMax:  j.salaryMax  || 0,
+        type:       j.job_type   || "Full Time",
+        remote:     "Remote",
+        postedDays: 0,
+        source:     j.source_platform || "RemoteOK",
+        skills:     j.requirements || [],
+        applyUrl:   j.source_url || "#",
+        }));
+    } catch(e) {
+      console.error("Failed to load jobs:", e);
+      jobs = [];
+    }
+  }
+
+  /* ============ State ============ */
+    const savedUser = localStorage.getItem('user');
+         async function loadSavedJobs() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/saved-jobs/', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.saved_jobs) {
+        data.saved_jobs.forEach(s => {
+          if (s.job && s.job.job_id) {
+            state.saved.add(s.job.job_id);
+            state.savedIdMap = state.savedIdMap || {};
+            state.savedIdMap[s.job.job_id] = s.id;
+          }
+        });
+      }
+    } catch(e) {}
+  }
+  const state = {
+    page: "home",
+    query: "",
+    filters: { location:"", salary:"", type:"", remote:"", source:"" },
+    selectedJobId: null,
+    saved: new Set(),
+    authMode: savedUser ? "registered" : "guest",
+    currentUser: savedUser ? JSON.parse(savedUser) : null,
+  };
+
+  /* ============ Icons ============ */
+  const ICONS = {
+    pin: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    cash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>`,
+    clock: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>`,
+    bookmark: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`,
+    bookmarkFilled: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`,
+  };
+  function lockIcon(size){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+  }
+
+  /* ============ Helpers ============ */
+  function fmtSalary(j){
+  if (!j.salaryMin && !j.salaryMax) return j.salary || "Salary not disclosed";
+  return `$${j.salaryMin.toLocaleString()} - $${j.salaryMax.toLocaleString()}`;
+}
+  function postedText(d){ return d === 0 ? "Posted today" : d === 1 ? "Posted 1 day ago" : `Posted ${d} days ago`; }
+  function initials(name){ return name.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+    function genDescription(job){
+    if (job.description) {
+      const div = document.createElement('div');
+      div.innerHTML = job.description;
+      const text = div.textContent || div.innerText || '';
+      return text.slice(0, 600) + (text.length > 600 ? '...' : '');
+    }
+    return `We're looking for a ${job.title} to join ${job.company}. This is a ${job.type.toLowerCase()} role based in ${job.location} (${job.remote.toLowerCase()}). You'll work closely with a small, focused team on real day-to-day problems.`;
+  }
+  function originalUrl(job){
+    const bases = {
+      "LinkedIn":"https://www.linkedin.com/jobs/search/?keywords=",
+      "JobStreet":"https://www.jobstreet.com.sg/jobs?keywords=",
+      "Indeed":"https://www.indeed.com/jobs?q=",
+      "Glassdoor":"https://www.glassdoor.com/Job/jobs.htm?sc.keyword=",
+      "Company Site":"https://www.google.com/search?q="
+    };
+    const base = bases[job.source] || bases["Company Site"];
+    return base + encodeURIComponent(job.title + " " + job.company);
+  }
+
+    function calcMatch(job){
+    const skills = job.skills || [];
+    const total = skills.length;
+    if (total === 0) return { pct: 0, strengths: [], missing: [] };
+    const have = skills.filter(s => (candidate.skills[s] || 0) >= 60);
+    const missing = skills.filter(s => (candidate.skills[s] || 0) < 60);
+    const pct = Math.round((have.length / total) * 100);
+    return { pct, strengths: have, missing };
+  }
+  function matchClass(pct){ return pct >= 80 ? "match-high" : pct >= 60 ? "match-mid" : "match-low"; }
+
+  /* ============ Auth / gating ============ */
+  const MODAL_COPY = {
+    default: { title:"Sign in to LazyApply", sub:"Create a free account to unlock the full experience." },
+    save:    { title:"Save this job", sub:"Sign in to save jobs and find them again later, all in one place." },
+    match:   { title:"See your AI Match score", sub:"Sign in and add your resume to see how well you match each job." },
+    ai:      { title:"Unlock AI Resume Analysis", sub:"Sign in to get your skills breakdown, top role matches, and personalized tips." },
+    saved:   { title:"Sign in to view saved jobs", sub:"Saved jobs live in your account, so you can find them from anywhere." },
+    profile: { title:"Create your free profile", sub:"Sign in to upload your resume, set job preferences, and get matched." },
+  };
+  
+    function bindModal(){
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    document.getElementById('modalOverlay').addEventListener('click', e=>{
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    });
+    document.getElementById('modalGuestBtn').addEventListener('click', closeModal);
+    document.getElementById('modalContinueBtn').addEventListener('click', ()=> handleAuth('login'));
+  }
+
+  function openAuthModal(ctx){
+    const actions = document.querySelector('.modal-actions');
+    document.getElementById('modalOverlay').classList.add('open');
+    document.getElementById('modalTitle').textContent = 'Sign in to LazyApply';
+    document.getElementById('modalSub').textContent = 'Register or log in to continue.';
+
+    actions.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+        <input id="authName" type="text" placeholder="Full name" style="padding:10px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg);color:var(--text-primary);display:none;">
+        <input id="authEmail" type="email" placeholder="Email" style="padding:10px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg);color:var(--text-primary);">
+        <input id="authPassword" type="password" placeholder="Password (min 6 chars)" style="padding:10px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg);color:var(--text-primary);">
+        <p id="authError" style="color:var(--danger);font-size:13px;display:none;margin:0;"></p>
+        <button class="btn btn-primary" id="authRegisterBtn" style="justify-content:center;">Register</button>
+        <button class="btn btn-secondary" id="authLoginBtn" style="justify-content:center;">Login</button>
+        <button class="btn btn-secondary" id="authGuestBtn" style="justify-content:center;">Continue as guest</button>
+      </div>`;
+
+    document.getElementById('authRegisterBtn').addEventListener('click', ()=>{
+      document.getElementById('authName').style.display = '';
+      handleAuth('register');
+    });
+    document.getElementById('authLoginBtn').addEventListener('click', ()=> handleAuth('login'));
+    document.getElementById('authGuestBtn').addEventListener('click', closeModal);
+  }
+
+  function closeModal(){
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  async function handleAuth(mode){
+    const name     = document.getElementById('authName')?.value || '';
+    const email    = document.getElementById('authEmail')?.value || '';
+    const password = document.getElementById('authPassword')?.value || '';
+    const errEl    = document.getElementById('authError');
+
+    if (!email || !password){
+      errEl.textContent = 'Email and password are required.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const url  = mode === 'register'
+      ? 'http://127.0.0.1:5000/api/register'
+      : 'http://127.0.0.1:5000/api/login';
+    const body = mode === 'register'
+      ? { name, email, password }
+      : { email, password };
+
+    try {
+      const res  = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+
+      if (!res.ok){
+        errEl.textContent = data.error || 'Something went wrong.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      state.authMode = 'registered';
+      state.currentUser = data.user;
+      closeModal();
+      updateNavAuthUI();
+      renderAll();
+
+    } catch(e){
+      errEl.textContent = 'Cannot connect to server.';
+      errEl.style.display = 'block';
+    }
+  }
+
+  function lockedStateHTML(opts){
+    return `
+    <div class="locked-card${opts.compact ? ' compact' : ''}">
+      <div class="locked-icon">${lockIcon(20)}</div>
+      <h3>${opts.title}</h3>
+      <p>${opts.sub}</p>
+      <button class="btn btn-primary btn-sm" data-locked-cta="${opts.ctx}" style="justify-content:center;">Sign Up Free</button>
+    </div>`;
+  }
+  function bindLockedCTA(container){
+    container.querySelectorAll('[data-locked-cta]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openAuthModal(btn.dataset.lockedCta));
+    });
+  }
+
+  function updateNavAuthUI(){
+    const isGuest = state.authMode === 'guest';
+    document.getElementById('lockAi').innerHTML = isGuest ? lockIcon(11) : '';
+    document.getElementById('lockSaved').innerHTML = isGuest ? lockIcon(11) : '';
+    document.getElementById('lockProfile').innerHTML = isGuest ? lockIcon(11) : '';
+    const authArea = document.getElementById('authArea');
+    if (isGuest){
+      authArea.innerHTML = `<button class="btn btn-primary btn-sm" id="signInBtn">Sign In</button>`;
+      document.getElementById('signInBtn').addEventListener('click', ()=> openAuthModal('default'));
+    } else {
+      authArea.innerHTML = `<button class="user-chip" id="userChip" title="Click to sign out (demo)">
+          <span class="avatar-sm">${state.currentUser ? state.currentUser.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) : 'AT'}</span>   <span class="user-chip-name">${state.currentUser ? state.currentUser.name : 'User'}</span>
+      </button>`;
+      document.getElementById('userChip').addEventListener('click', ()=>{
+        if (confirm('Are you sure you want to log out?')) {
+          state.authMode = 'guest';
+          state.currentUser = null;
+          state.saved = new Set();
+          state.savedIdMap = {};
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          updateNavAuthUI();
+          renderAll();
+        }
+      });
+    }
+  }
+
+  function matchesFilters(job){
+    const q = state.query.trim().toLowerCase();
+    if (q && !job.title.toLowerCase().includes(q) && !job.company.toLowerCase().includes(q)) return false;
+    if (state.filters.location && job.location !== state.filters.location) return false;
+    if (state.filters.type && job.type !== state.filters.type) return false;
+    if (state.filters.remote && job.remote !== state.filters.remote) return false;
+    if (state.filters.source && job.source !== state.filters.source) return false;
+    if (state.filters.salary) {
+      const [lo, hi] = state.filters.salary.split("-").map(Number);
+      if (job.salaryMax < lo || job.salaryMin > (hi || Infinity)) return false;
+    }
+    return true;
+  }
+
+  /* ============ Job card render ============ */
+  function jobCardHTML(job){
+    const m = calcMatch(job);
+    const isSaved = state.saved.has(job.id);
+    const isSelected = state.selectedJobId === job.id;
+    const src = SOURCES[job.source] || SOURCES["Company Site"];
+    return `
+    <div class="job-card${isSelected ? ' selected' : ''}" data-job-id="${job.id}">
+      <div class="job-card-top">
+        <div class="job-card-id">
+          <div class="avatar-wrap">
+            <div class="avatar-sm">${initials(job.company)}</div>
+            <div class="source-badge" style="background:${src.color};" title="Found via ${job.source}">${src.mono}</div>
+          </div>
+          <div>
+            <h3>${job.title}</h3>
+            <div class="job-company">${job.company}</div>
+          </div>
+        </div>
+        ${state.authMode === 'registered'
+          ? `<div class="mini-ring ${matchClass(m.pct)}" style="--pct:${m.pct};" title="${m.pct}% match" aria-label="${m.pct}% match"><div class="mini-ring-inner">${m.pct}</div></div>`
+          : `<div class="mini-ring locked" data-action="locked-match" data-job-id="${job.id}" title="Sign in to see your match score" aria-label="Sign in to see match score"><div class="mini-ring-inner">${lockIcon(13)}</div></div>`}
+      </div>
+      <div class="job-meta">
+        <span>${ICONS.pin}${job.location}</span>
+        <span class="job-salary">${ICONS.cash}${fmtSalary(job)}</span>
+      </div>
+      <div class="job-tags">
+        <span class="tag">${job.type}</span>
+        <span class="tag">${job.remote}</span>
+      </div>
+      <div class="job-card-bottom">
+        <span class="job-posted">${ICONS.clock} ${postedText(job.postedDays)} <span class="source-dot" style="background:${src.color};"></span> ${job.source}</span>
+        <div class="job-card-actions">
+          <button class="btn btn-secondary btn-sm" data-action="view" data-job-id="${job.id}">View</button>
+          <button class="btn btn-save btn-sm${isSaved ? ' saved' : ''}" data-action="save" data-job-id="${job.id}">
+            ${isSaved ? ICONS.bookmarkFilled : ICONS.bookmark} ${isSaved ? 'Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function skelCardHTML(){
+    return `
+    <div class="skel-card">
+      <div class="skeleton skel-line" style="width:60%;height:16px;"></div>
+      <div class="skeleton skel-line" style="width:40%;"></div>
+      <div class="skeleton skel-line" style="width:80%;"></div>
+      <div class="skeleton skel-line" style="width:50%;"></div>
+    </div>`;
+  }
+
+  function attachCardEvents(container){
+    container.querySelectorAll('[data-action="save"]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        e.stopPropagation();
+        if (state.authMode === 'guest'){
+          openAuthModal('save');
+          return;
+        }
+        const id = Number(btn.dataset.jobId);
+                const nowSaved = !state.saved.has(id);
+        if (nowSaved) state.saved.add(id); else state.saved.delete(id);
+        updateSavedCount();
+        btn.classList.toggle('saved', nowSaved);
+        btn.innerHTML = `${nowSaved ? ICONS.bookmarkFilled : ICONS.bookmark} ${nowSaved ? 'Saved' : 'Save'}`;
+        btn.classList.add('pop');
+        btn.addEventListener('animationend', ()=> btn.classList.remove('pop'), { once:true });
+        if (state.page === 'saved' && !nowSaved) renderSavedPage();
+
+        const token = localStorage.getItem('token');
+        if (token) {
+          if (nowSaved) {
+            fetch('http://127.0.0.1:5000/api/saved-jobs/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ job_id: id }),
+            }).catch(e => console.error('Save job error:', e));
+          } else {
+              const savedId = (state.savedIdMap && state.savedIdMap[id]) || id;
+            fetch(`http://127.0.0.1:5000/api/saved-jobs/${savedId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` },
+            }).then(() => {
+              state.savedIdMap && delete state.savedIdMap[id];
+            }).catch(e => console.error('Delete saved job error:', e));
+           }
+        }
+      });
+    });
+    container.querySelectorAll('[data-action="locked-match"]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        e.stopPropagation();
+        openAuthModal('match');
+      });
+    });
+    container.querySelectorAll('[data-action="view"]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        e.stopPropagation();
+        selectJob(Number(btn.dataset.jobId));
+      });
+    });
+    container.querySelectorAll('.job-card').forEach(card=>{
+      card.addEventListener('click', ()=> selectJob(Number(card.dataset.jobId)));
+    });
+  }
+
+  function selectJob(id){
+    state.selectedJobId = id;
+    if (state.page !== 'search') {
+      navigate('search', { keepFilters:true });
+    } else {
+      renderSearch();
+    }
+  }
+
+  /* ============ Filter option population ============ */
+  function populateFilters(){
+    const locs = [...new Set(jobs.map(j=>j.location))].sort();
+    const types = [...new Set(jobs.map(j=>j.type))];
+    const remotes = [...new Set(jobs.map(j=>j.remote))];
+    const salaryBuckets = [
+      {label:"Below $3,000", val:"0-3000"},
+      {label:"$3,000 – $5,000", val:"3000-5000"},
+      {label:"$5,000 – $8,000", val:"5000-8000"},
+      {label:"$8,000+", val:"8000-999999"},
+    ];
+    fillSelect('filterLocation', locs.map(l=>({label:l, val:l})), "Location");
+    fillSelect('filterType', types.map(t=>({label:t, val:t})), "Job Type");
+    fillSelect('filterRemote', remotes.map(r=>({label:r, val:r})), "Remote");
+    fillSelect('filterSalary', salaryBuckets, "Salary");
+    fillSelect('filterSource', SOURCE_ORDER.map(s=>({label:s, val:s})), "Source");
+  }
+  function fillSelect(id, options, defaultLabel){
+    const el = document.getElementById(id);
+    el.innerHTML = `<option value="">${defaultLabel}</option>` +
+      options.map(o=>`<option value="${o.val}">${o.label}</option>`).join('');
+  }
+
+  function bindFilterBar(){
+    document.getElementById('searchInput').addEventListener('input', e=>{
+      state.query = e.target.value;
+      if (state.page === 'home') return; // home navigates on submit/enter
+      renderSearch();
+    });
+    document.getElementById('searchInput').addEventListener('keydown', async e=>{
+      if (e.key === 'Enter') {
+        const query = document.getElementById('searchInput').value.trim();
+        state.query = query;
+        await loadJobs(query);
+        populateFilters();
+        if (state.page === 'home') navigate('search');
+        else renderSearch();
+      }
+    });
+
+    const searchBtn = document.getElementById('searchBtn');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', async ()=>{
+        const query = document.getElementById('searchInput').value.trim();
+        await loadJobs(query);
+        populateFilters();
+        if (state.page === 'home') navigate('search');
+        else renderSearch();
+      });
+    }
+    ['filterLocation','filterSalary','filterType','filterRemote','filterSource'].forEach(id=>{
+      document.getElementById(id).addEventListener('change', e=>{
+        const key = id.replace('filter','').toLowerCase();
+        state.filters[key] = e.target.value;
+        if (state.page === 'home') { navigate('search'); return; }
+        renderSearch();
+      });
+    });
+  }
+
+  /* ============ Page renderers ============ */
+  function renderHome(){
+    const grid = document.getElementById('homeJobGrid');
+    grid.innerHTML = Array(4).fill(skelCardHTML()).join('');
+    setTimeout(()=>{
+      const latest = [...jobs].sort((a,b)=>a.postedDays-b.postedDays).slice(0,6);
+      document.getElementById('homeCount').textContent = `${latest.length} jobs`;
+      grid.innerHTML = latest.map(jobCardHTML).join('');
+      attachCardEvents(grid);
+    }, 250);
+  }
+
+  function renderSearch(){
+    const listEl = document.getElementById('searchJobList');
+    const filtered = jobs.filter(matchesFilters).sort((a,b)=>calcMatch(b).pct - calcMatch(a).pct);
+    document.getElementById('searchHeading').textContent = state.query ? `Results for "${state.query}"` : "Search results";
+    document.getElementById('searchCount').textContent = `${filtered.length} jobs`;
+
+    if (!filtered.length){
+      listEl.innerHTML = `<div class="empty-state"><h3>No jobs match your filters</h3><p>Try widening your search or clearing a filter.</p></div>`;
+      document.getElementById('aiPanel').innerHTML = `<div class="empty-state"><h3>No job selected</h3><p>Search for a job to see details here.</p></div>`;
+    } else {
+      listEl.innerHTML = filtered.map(jobCardHTML).join('');
+      attachCardEvents(listEl);
+    }
+
+    if (!state.selectedJobId || !filtered.find(j=>j.id===state.selectedJobId)){
+      state.selectedJobId = filtered.length ? filtered[0].id : null;
+    }
+    renderAIPanel(filtered);
+  }
+
+  function renderAIPanel(filteredList){
+    const panel = document.getElementById('aiPanel');
+    const job = jobs.find(j=>j.id===state.selectedJobId);
+    if (!job){
+      panel.innerHTML = `<div class="empty-state"><h3>No job selected</h3><p>Pick a job from the list to see your match.</p></div>`;
+      return;
+    }
+    if (state.authMode === 'guest') renderGuestJobDetail(panel, job);
+    else renderRegisteredAIPanel(panel, job);
+  }
+
+  function renderGuestJobDetail(panel, job){
+    const src = SOURCES[job.source] || SOURCES["Company Site"];
+    panel.innerHTML = `
+      <div>
+        <div class="ai-panel-label">Job Details</div>
+        <div class="score-row" style="margin-top:10px;align-items:flex-start;">
+          <div class="avatar-wrap">
+            <div class="avatar-sm" style="width:40px;height:40px;font-size:13px;">${initials(job.company)}</div>
+            <div class="source-badge" style="background:${src.color};">${src.mono}</div>
+          </div>
+          <div class="score-text">
+            <h3>${job.title}</h3>
+            <p>${job.company} · ${job.location}</p>
+          </div>
+        </div>
+      </div>
+      <div class="ai-source-row">
+        <span class="source-dot" style="background:${src.color};"></span>
+        Found via <strong>${job.source}</strong>
+      </div>
+      <div class="divider"></div>
+      <div class="chip-group">
+        <div class="chip-label">About this role</div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.65;">${genDescription(job)}</p>
+      </div>
+      <a href="${originalUrl(job)}" target="_blank" rel="noopener" class="btn btn-primary" style="justify-content:center;width:100%;">
+        Find this job on ${job.source} ↗
+      </a>
+      <div class="divider"></div>
+      <div class="teaser-wrap">
+        <div class="teaser-blur">
+          <div class="chip-group">
+            <div class="chip-label">Strengths</div>
+            <div class="chip-row"><span class="chip chip-ok">✔ Python</span><span class="chip chip-ok">✔ SQL</span><span class="chip chip-missing">✖ AWS</span></div>
+          </div>
+        </div>
+        <div class="teaser-overlay">
+          <div class="locked-icon">${lockIcon(18)}</div>
+          <p>Sign up free to see your AI match score for this job</p>
+          <button class="btn btn-primary btn-sm" data-locked-cta="match">Sign Up Free</button>
+        </div>
+      </div>
+    `;
+    bindLockedCTA(panel);
+  }
+
+  function renderRegisteredAIPanel(panel, job){
+    const m = calcMatch(job);
+    const src = SOURCES[job.source] || SOURCES["Company Site"];
+    const others = jobs.filter(j=>j.id!==job.id).map(j=>({job:j, m:calcMatch(j)}))
+      .sort((a,b)=>b.m.pct - a.m.pct).slice(0,3);
+
+    panel.innerHTML = `
+      <div>
+        <div class="ai-panel-label">AI Match</div>
+        <div class="score-row" style="margin-top:10px;">
+          <div class="score-ring" style="--pct:${m.pct};"><div class="score-ring-inner">${m.pct}%</div></div>
+          <div class="score-text">
+            <h3>${job.title}</h3>
+            <p>${job.company} · Resume score ${m.pct}%</p>
+          </div>
+        </div>
+      </div>
+      <div class="ai-source-row">
+        <span class="source-dot" style="background:${src.color};"></span>
+        Found via <strong>${job.source}</strong>
+        <a href="${originalUrl(job)}" target="_blank" rel="noopener" class="ai-source-link">View original ↗</a>
+      </div>
+      <div class="divider"></div>
+      <div class="chip-group">
+        <div class="chip-label">Strengths</div>
+        <div class="chip-row">
+          ${m.strengths.length ? m.strengths.map(s=>`<span class="chip chip-ok">✔ ${s}</span>`).join('') : '<span class="chip" style="color:var(--text-muted);">None yet</span>'}
+        </div>
+      </div>
+      <div class="chip-group">
+        <div class="chip-label">Missing Skills</div>
+        <div class="chip-row">
+          ${m.missing.length ? m.missing.map(s=>`<span class="chip chip-missing">✖ ${s}</span>`).join('') : '<span class="chip chip-ok">✔ Fully covered</span>'}
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <div class="chip-label">Recommended Jobs</div>
+        <div class="reco-list" style="margin-top:8px;">
+          ${others.map(o=>`
+            <div class="reco-item" data-job-id="${o.job.id}">
+              <div>
+                <div class="t">${o.job.title}</div>
+                <div class="c">${o.job.company}</div>
+              </div>
+              <span class="reco-pct">${o.m.pct}%</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    `;
+    panel.querySelectorAll('.reco-item').forEach(el=>{
+      el.addEventListener('click', ()=> selectJob(Number(el.dataset.jobId)));
+    });
+  }
+
+  function renderAIPage(){
+    const locked = document.getElementById('aiLockedContent');
+    const real = document.getElementById('aiRealContent');
+    if (state.authMode === 'guest'){
+      real.style.display = 'none';
+      locked.style.display = 'block';
+      locked.innerHTML = lockedStateHTML({
+        title: "Unlock your AI Resume Analysis",
+        sub: "Sign in and add your resume to see your skills breakdown, top matching roles, and personalized improvement tips.",
+        ctx: 'ai'
+      });
+      bindLockedCTA(locked);
+      return;
+    }
+    real.style.display = '';
+    locked.style.display = 'none';
+
+    const skillOrder = ["Python","SQL","JavaScript","React","AWS","Docker","System Design"];
+    const breakdown = document.getElementById('skillsBreakdown');
+    breakdown.innerHTML = skillOrder.map(s=>{
+      const pct = candidate.skills[s] || 0;
+      return `
+      <div class="skillbar-row">
+        <div class="skillbar-name">${s}</div>
+        <div class="skillbar-track"><div class="skillbar-fill${pct<50?' low':''}" data-target="${pct}" style="width:0%;"></div></div>
+        <div class="skillbar-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        breakdown.querySelectorAll('.skillbar-fill').forEach(el=>{
+          el.style.width = el.dataset.target + '%';
+        });
+      });
+    });
+
+    const ranked = jobs.map(j=>({job:j, m:calcMatch(j)}))
+      .sort((a,b)=>b.m.pct - a.m.pct);
+    const seenTitles = new Set();
+    const top = [];
+    for (const r of ranked){
+      if (seenTitles.has(r.job.title)) continue;
+      seenTitles.add(r.job.title);
+      top.push(r);
+      if (top.length === 5) break;
+    }
+    document.getElementById('matchResultsList').innerHTML = top.map(r=>`
+      <div class="match-result-row" data-title="${r.job.title}">
+        <span style="font-size:13px;font-weight:500;">${r.job.title}</span>
+        <span class="reco-pct">${r.m.pct}%</span>
+      </div>`).join('');
+    document.querySelectorAll('.match-result-row').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        state.query = el.dataset.title;
+        document.getElementById('searchInput').value = state.query;
+        navigate('search');
+      });
+    });
+
+    const gapSkills = Object.entries(candidate.skills)
+      .filter(([k,v]) => SUGGESTION_COPY[k] !== undefined)
+      .sort((a,b)=>a[1]-b[1])
+      .slice(0,3)
+      .map(([k])=>k);
+    document.getElementById('suggestionList').innerHTML = gapSkills.map(s=>`
+      <div class="suggestion-item"><span class="suggestion-dot"></span><span>${SUGGESTION_COPY[s]}</span></div>
+    `).join('');
+  }
+
+  function renderSavedPage(){
+    const grid = document.getElementById('savedJobGrid');
+    if (state.authMode === 'guest'){
+      document.getElementById('savedPageCount').textContent = '';
+      grid.innerHTML = `<div style="grid-column:1/-1;">${lockedStateHTML({
+        title: "Sign in to view saved jobs",
+        sub: "Save jobs you find across LinkedIn, JobStreet, Indeed and more — then come back and find them all here.",
+        ctx: 'saved'
+      })}</div>`;
+      bindLockedCTA(grid);
+      return;
+    }
+    const savedJobs = jobs.filter(j=>state.saved.has(j.id));
+    document.getElementById('savedPageCount').textContent = savedJobs.length ? `${savedJobs.length} jobs` : '';
+    if (!savedJobs.length){
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <h3>No saved jobs yet</h3>
+        <p>Tap Save on any job to keep it here for later.</p>
+        <button class="btn btn-primary btn-sm" data-nav="home">Browse jobs</button>
+      </div>`;
+      grid.querySelector('[data-nav]').addEventListener('click', e=>navigate(e.target.dataset.nav));
+    } else {
+      grid.innerHTML = savedJobs.map(jobCardHTML).join('');
+      attachCardEvents(grid);
+    }
+  }
+
+  function renderProfilePage(){
+    const locked = document.getElementById('profileLockedContent');
+    const real = document.getElementById('profileRealContent');
+    if (state.authMode === 'guest'){
+      real.style.display = 'none';
+      locked.style.display = 'block';
+      locked.innerHTML = lockedStateHTML({
+        title: "Create your free profile",
+        sub: "Sign in to upload your resume, set job preferences, and unlock AI-matched recommendations.",
+        ctx: 'profile'
+      });
+      bindLockedCTA(locked);
+      return;
+    }
+    real.style.display = '';
+    locked.style.display = 'none';
+
+    // Show real user name and email
+    if (state.currentUser) {
+      const nameEl = document.querySelector('.profile-info h2');
+      const emailEl = document.querySelector('.profile-info .role');
+      if (nameEl) nameEl.textContent = state.currentUser.name;
+      if (emailEl) emailEl.textContent = state.currentUser.email;
+      const avatarEl = document.getElementById('profileAvatar');
+      if (avatarEl) avatarEl.textContent = state.currentUser.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+            // Load saved preferences
+      if (state.currentUser) {
+        const loc = document.getElementById('prefLocation');
+        const type = document.getElementById('prefType');
+        if (loc && state.currentUser.preferred_location) loc.value = state.currentUser.preferred_location;
+        if (type && state.currentUser.preferred_job_type) type.value = state.currentUser.preferred_job_type;
+        const salary = document.getElementById('prefSalary');
+        const remote = document.getElementById('prefRemote');
+        if (salary && localStorage.getItem('prefSalary')) salary.value = localStorage.getItem('prefSalary');
+        if (remote && localStorage.getItem('prefRemote')) remote.value = localStorage.getItem('prefRemote');
+      }
+            // Load existing resume
+      const token = localStorage.getItem('token');
+      if (token) {
+        fetch('http://127.0.0.1:5000/api/resume/', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }).then(res => res.json()).then(data => {
+          if (data.resume) {
+            const dropzone = document.getElementById('resumeUpload');
+            const inner = document.getElementById('resumeUploadInner');
+            const filename = data.resume.file_path.split('\\').pop().split('/').pop();
+            dropzone.classList.add('uploaded');
+            inner.innerHTML = `
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <p><strong>${filename}</strong></p>
+              <span class="job-posted" style="justify-content:center;">Resume uploaded</span>`;
+          }
+        }).catch(()=>{});
+      }
+    }
+
+    const chips = document.getElementById('profileSkillChips');
+    chips.innerHTML = Object.keys(candidate.skills)
+      .filter(s => candidate.skills[s] >= 60)
+      .map(s=>`<span class="skill-chip">${s}</span>`).join('');
+  }
+
+  function updateSavedCount(){
+    document.getElementById('savedCount').textContent = state.saved.size;
+  }
+
+  function renderAll(){
+    updateSavedCount();
+    if (state.page === 'home') renderHome();
+    else if (state.page === 'search') renderSearch();
+    else if (state.page === 'ai') renderAIPage();
+    else if (state.page === 'saved') renderSavedPage();
+    else if (state.page === 'profile') renderProfilePage();
+  }
+
+  /* ============ Navigation ============ */
+  function navigate(page, opts){
+    opts = opts || {};
+    state.page = page;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.querySelectorAll('.navlink').forEach(n=>n.classList.toggle('active', n.dataset.nav === page));
+    document.getElementById('searchbarWrap').style.display = (page === 'ai' || page === 'profile') ? 'none' : 'block';
+    document.getElementById('navLinks').classList.remove('open');
+    window.scrollTo({top:0, behavior:'auto'});
+    renderAll();
+  }
+
+  /* ============ Theme toggle ============ */
+     function bindTheme(){
+    const btn = document.getElementById('themeToggle');
+    const icon = document.getElementById('themeIcon');
+
+    // Restore saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.body.setAttribute('data-theme', savedTheme);
+      icon.innerHTML = savedTheme === 'dark'
+        ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    }
+
+    btn.addEventListener('click', ()=>{
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      const newTheme = isDark ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      icon.innerHTML = isDark
+        ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+        : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+    });
+  }
+
+  function bindNav(){
+    document.querySelectorAll('[data-nav]').forEach(el=>{
+      el.addEventListener('click', ()=> navigate(el.dataset.nav));
+    });
+    document.getElementById('navMenuToggle').addEventListener('click', ()=>{
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+  }
+
+  function renderSourceTrustRow(){
+    const row = document.getElementById('sourceTrustRow');
+    const chips = SOURCE_ORDER.map(name=>{
+      const s = SOURCES[name];
+      return `<span class="source-chip"><span class="source-dot" style="background:${s.color};"></span>${name}</span>`;
+    }).join('');
+    row.insertAdjacentHTML('beforeend', chips);
+  }
+
+  function bindProfileExtras(){
+    const dropzone = document.getElementById('resumeUpload');
+    const input = document.getElementById('resumeFileInput');
+    const inner = document.getElementById('resumeUploadInner');
+    dropzone.addEventListener('click', ()=> input.click());
+    input.addEventListener('change', async ()=>{
+      if (input.files && input.files[0]){
+        const token = localStorage.getItem('token');
+        if (!token) {
+          openAuthModal('profile');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', input.files[0]);
+
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/resume/', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            dropzone.classList.add('uploaded');
+            inner.innerHTML = `
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <p><strong>${input.files[0].name}</strong></p>
+              <span class="job-posted" style="justify-content:center;">Resume uploaded successfully</span>`;
+          } else {
+            inner.innerHTML = `<p style="color:var(--danger);">${data.error || 'Upload failed'}</p>`;
+          }
+        } catch(e) {
+          inner.innerHTML = `<p style="color:var(--danger);">Cannot connect to server.</p>`;
+        }
+      }
+    });
+
+    const salaryBuckets = [
+      {label:"Below $3,000", val:"0-3000"},
+      {label:"$3,000 – $5,000", val:"3000-5000"},
+      {label:"$5,000 – $8,000", val:"5000-8000"},
+      {label:"$8,000+", val:"8000-999999"},
+    ];
+    fillSelect('prefLocation', [...new Set(jobs.map(j=>j.location))].sort().map(l=>({label:l, val:l})), "Any location");
+    fillSelect('prefSalary', salaryBuckets, "Any salary");
+    fillSelect('prefType', [...new Set(jobs.map(j=>j.type))].map(t=>({label:t, val:t})), "Any type");
+    fillSelect('prefRemote', [...new Set(jobs.map(j=>j.remote))].map(r=>({label:r, val:r})), "Any");
+
+    document.getElementById('savePrefsBtn').addEventListener('click', async ()=>{
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const prefs = {
+        preferred_location: document.getElementById('prefLocation').value,
+        preferred_job_type: document.getElementById('prefType').value,
+      };
+
+      try {
+        await fetch('http://127.0.0.1:5000/api/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(prefs),
+        });
+
+        // Update local state
+        if (state.currentUser) {
+          state.currentUser.preferred_location = prefs.preferred_location;
+          state.currentUser.preferred_job_type = prefs.preferred_job_type;
+          localStorage.setItem('user', JSON.stringify(state.currentUser));
+        }
+
+                // Save salary and remote to localStorage
+        localStorage.setItem('prefSalary', document.getElementById('prefSalary').value);
+        localStorage.setItem('prefRemote', document.getElementById('prefRemote').value);
+        const msg = document.getElementById('prefSavedMsg');
+        msg.style.display = 'inline-flex';
+        clearTimeout(msg._hideTimer);
+        msg._hideTimer = setTimeout(()=>{ msg.style.display = 'none'; }, 2500);
+
+      } catch(e) {
+        console.error('Save prefs error:', e);
+      }
+    });
+  }
+
+  /* ============ Init ============ */
+  bindTheme();
+  bindNav();
+  bindModal();
+  updateNavAuthUI();
+    loadJobs("developer").then(() => {
+    loadSavedJobs().then(() => {
+    populateFilters();
+    renderSourceTrustRow();
+    bindFilterBar();
+    bindProfileExtras();
+      navigate('home');
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
