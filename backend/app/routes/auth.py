@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.services.auth_service import register_user, login_user, update_profile
+from app.services.mail_service import generate_reset_token, consume_reset_token, send_reset_email
 from app.models.user import User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
@@ -51,3 +52,44 @@ def put_profile():
     data = request.get_json(silent=True) or {}
     result, status = update_profile(int(get_jwt_identity()), data)
     return jsonify(result), status
+
+
+@auth_bp.post("/forgot-password")
+def forgot_password():
+    data  = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    # Always return success to avoid leaking which emails exist
+    if user:
+        token = generate_reset_token(user.user_id)
+        send_reset_email(email, token)
+
+    return jsonify({"message": "If that email exists, a reset link has been sent."}), 200
+
+
+@auth_bp.post("/reset-password")
+def reset_password():
+    data     = request.get_json(silent=True) or {}
+    token    = (data.get("token")    or "").strip()
+    password =  data.get("password") or ""
+
+    if not token or not password:
+        return jsonify({"error": "token and password are required"}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    user_id = consume_reset_token(token)
+    if not user_id:
+        return jsonify({"error": "Invalid or expired reset link"}), 400
+
+    from app.extensions import bcrypt, db
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    user.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+    db.session.commit()
+    return jsonify({"message": "Password reset successful"}), 200

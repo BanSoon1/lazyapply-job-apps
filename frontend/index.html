@@ -882,6 +882,7 @@
         <p id="authError" style="color:var(--danger);font-size:13px;display:none;margin:0;"></p>
         <button class="btn btn-primary" id="authRegisterBtn" style="justify-content:center;">Register</button>
         <button class="btn btn-secondary" id="authLoginBtn" style="justify-content:center;">Login</button>
+        <button type="button" id="authForgotBtn" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;text-align:center;padding:0;">Forgot password?</button>
         <button class="btn btn-secondary" id="authGuestBtn" style="justify-content:center;">Continue as guest</button>
       </div>`;
 
@@ -891,10 +892,84 @@
     });
     document.getElementById('authLoginBtn').addEventListener('click', ()=> handleAuth('login'));
     document.getElementById('authGuestBtn').addEventListener('click', closeModal);
+    document.getElementById('authForgotBtn').addEventListener('click', showForgotPassword);
   }
 
   function closeModal(){
     document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  function showForgotPassword(){
+    const actions = document.querySelector('.modal-actions');
+    document.getElementById('modalTitle').textContent = 'Reset your password';
+    document.getElementById('modalSub').textContent = 'Enter your email and we\'ll send you a reset link.';
+    actions.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+        <input id="forgotEmail" type="email" placeholder="Your email" style="padding:10px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg);color:var(--text-primary);">
+        <p id="forgotMsg" style="font-size:13px;display:none;margin:0;"></p>
+        <button class="btn btn-primary" id="forgotSubmitBtn" style="justify-content:center;">Send reset link</button>
+        <button type="button" id="forgotBackBtn" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;text-align:center;">Back to login</button>
+      </div>`;
+    document.getElementById('forgotSubmitBtn').addEventListener('click', handleForgotPassword);
+    document.getElementById('forgotBackBtn').addEventListener('click', openAuthModal);
+  }
+
+  async function handleForgotPassword(){
+    const email  = (document.getElementById('forgotEmail')?.value || '').trim();
+    const msgEl  = document.getElementById('forgotMsg');
+    if (!email){ msgEl.textContent = 'Please enter your email.'; msgEl.style.color = 'var(--danger)'; msgEl.style.display = 'block'; return; }
+    try {
+      const res  = await fetch('http://127.0.0.1:5000/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      msgEl.textContent = data.message || 'Reset link sent!';
+      msgEl.style.color = 'var(--success)';
+      msgEl.style.display = 'block';
+      document.getElementById('forgotSubmitBtn').disabled = true;
+    } catch(e) {
+      msgEl.textContent = 'Something went wrong. Try again.';
+      msgEl.style.color = 'var(--danger)';
+      msgEl.style.display = 'block';
+    }
+  }
+
+  async function handleResetPassword(token){
+    const actions = document.querySelector('.modal-actions');
+    document.getElementById('modalTitle').textContent = 'Set new password';
+    document.getElementById('modalSub').textContent = 'Enter your new password below.';
+    document.getElementById('modalOverlay').classList.add('open');
+    actions.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+        <input id="resetPassword" type="password" placeholder="New password (min 6 chars)" style="padding:10px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg);color:var(--text-primary);">
+        <p id="resetMsg" style="font-size:13px;display:none;margin:0;"></p>
+        <button class="btn btn-primary" id="resetSubmitBtn" style="justify-content:center;">Reset password</button>
+      </div>`;
+    document.getElementById('resetSubmitBtn').addEventListener('click', async ()=>{
+      const password = document.getElementById('resetPassword')?.value || '';
+      const msgEl    = document.getElementById('resetMsg');
+      if (password.length < 6){ msgEl.textContent = 'Password must be at least 6 characters.'; msgEl.style.color = 'var(--danger)'; msgEl.style.display = 'block'; return; }
+      try {
+        const res  = await fetch('http://127.0.0.1:5000/api/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password }),
+        });
+        const data = await res.json();
+        if (!res.ok){ msgEl.textContent = data.error || 'Reset failed.'; msgEl.style.color = 'var(--danger)'; msgEl.style.display = 'block'; return; }
+        msgEl.textContent = 'Password reset! You can now log in.';
+        msgEl.style.color = 'var(--success)';
+        msgEl.style.display = 'block';
+        document.getElementById('resetSubmitBtn').disabled = true;
+        setTimeout(openAuthModal, 2000);
+      } catch(e) {
+        msgEl.textContent = 'Something went wrong. Try again.';
+        msgEl.style.color = 'var(--danger)';
+        msgEl.style.display = 'block';
+      }
+    });
   }
 
   async function handleAuth(mode){
@@ -1661,6 +1736,10 @@
     bindFilterBar();
     bindProfileExtras();
       navigate('home');
+      // Auto-open reset password modal if reset_token in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const resetToken = urlParams.get('reset_token');
+      if (resetToken) handleResetPassword(resetToken);
     });
   });
 
