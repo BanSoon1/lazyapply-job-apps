@@ -8,8 +8,8 @@ import requests
 BASE = "https://api.adzuna.com/v1/api/jobs"
 
 COUNTRIES = [
-    ("my", "Malaysia",   "RM",  "badge-orange"),
     ("sg", "Singapore",  "SGD", "badge-blue"),
+    ("gb", "United Kingdom", "£", "badge-orange"),
 ]
 
 

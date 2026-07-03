@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models.resume import Resume
+from app.services.resume_service import process_resume
 
 resume_bp = Blueprint("resume", __name__, url_prefix="/api/resume")
 
@@ -44,6 +45,9 @@ def upload_resume():
     resume = Resume(user_id=user_id, file_path=file_path)
     db.session.add(resume)
     db.session.commit()
+
+    # Extract skills from the uploaded file
+    process_resume(resume)
 
     return jsonify({"message": "Resume uploaded", "resume": resume.to_dict()}), 201
 

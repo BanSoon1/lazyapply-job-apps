@@ -1496,7 +1496,9 @@
     updateSavedCount();
     if (state.page === 'home') renderHome();
     else if (state.page === 'search') renderSearch();
-    else if (state.page === 'ai') renderAIPage();
+    else if (state.page === 'ai') {
+      loadResumeSkills().then(() => loadRecommendations()).then(() => renderAIPage());
+    }
     else if (state.page === 'saved') renderSavedPage();
     else if (state.page === 'profile') renderProfilePage();
   }
