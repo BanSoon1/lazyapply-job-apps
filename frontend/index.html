@@ -785,7 +785,7 @@
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('${API_BASE}/api/saved-jobs/', {
+      const res = await fetch(`${API_BASE}/api/saved-jobs/`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
@@ -816,7 +816,7 @@
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('${API_BASE}/api/recommendations', {
+      const res = await fetch(`${API_BASE}/api/recommendations`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!res.ok) return;
@@ -833,7 +833,7 @@
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('${API_BASE}/api/resume/', {
+      const res = await fetch(`${API_BASE}/api/resume/`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!res.ok) return;
@@ -972,7 +972,7 @@
     const msgEl  = document.getElementById('forgotMsg');
     if (!email){ msgEl.textContent = 'Please enter your email.'; msgEl.style.color = 'var(--danger)'; msgEl.style.display = 'block'; return; }
     try {
-      const res  = await fetch('${API_BASE}/api/forgot-password', {
+      const res  = await fetch(`${API_BASE}/api/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -1005,7 +1005,7 @@
       const msgEl    = document.getElementById('resetMsg');
       if (password.length < 6){ msgEl.textContent = 'Password must be at least 6 characters.'; msgEl.style.color = 'var(--danger)'; msgEl.style.display = 'block'; return; }
       try {
-        const res  = await fetch('${API_BASE}/api/reset-password', {
+        const res  = await fetch(`${API_BASE}/api/reset-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, password }),
@@ -1042,8 +1042,8 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Please wait...'; }
 
     const url  = mode === 'register'
-      ? '${API_BASE}/api/register'
-      : '${API_BASE}/api/login';
+      ? `${API_BASE}/api/register`
+      : `${API_BASE}/api/login`;
     const body = mode === 'register'
       ? { name, email, password }
       : { email, password };
@@ -1209,7 +1209,7 @@
         const token = localStorage.getItem('token');
         if (token) {
           if (nowSaved) {
-            fetch('${API_BASE}/api/saved-jobs/', {
+            fetch(`${API_BASE}/api/saved-jobs/`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
               body: JSON.stringify({ job_id: id }),
@@ -1616,7 +1616,7 @@
             // Load existing resume
       const token = localStorage.getItem('token');
       if (token) {
-        fetch('${API_BASE}/api/resume/', {
+        fetch(`${API_BASE}/api/resume/`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }).then(res => res.json()).then(data => {
           if (data.resume) {
@@ -1730,7 +1730,7 @@
         dropzone.style.pointerEvents = 'none';
 
         try {
-          const res = await fetch('${API_BASE}/api/resume/', {
+          const res = await fetch(`${API_BASE}/api/resume/`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData,
@@ -1778,7 +1778,7 @@
       };
 
       try {
-        await fetch('${API_BASE}/api/profile', {
+        await fetch(`${API_BASE}/api/profile`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1831,4 +1831,5 @@
 </script>
 </body>
 </html>
+
 
