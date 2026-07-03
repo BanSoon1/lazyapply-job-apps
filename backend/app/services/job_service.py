@@ -87,7 +87,7 @@ def search_jobs(query: str, location: str = "", job_type: str = "", sal_min: str
             seen.add(key)
             unique_raw.append(j)
 
-    unique_raw.sort(key=_recency_sort_key)
+    unique_raw.sort(key=lambda j: (_region_priority(j), _recency_sort_key(j)))
 
     # Upsert into DB and return DB records
     result = []
@@ -136,3 +136,9 @@ def _recency_sort_key(j):
         except ValueError:
             pass
     return 99
+
+def _region_priority(j):
+    location = (j.get("location") or "").lower()
+    if any(k in location for k in ["singapore", "malaysia", "kuala lumpur", "johor", "penang"]):
+        return 0
+    return 1  

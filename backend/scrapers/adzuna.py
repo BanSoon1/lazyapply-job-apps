@@ -1,25 +1,41 @@
 """
 Adzuna API — free tier: 100 requests/day.
 Register at https://developer.adzuna.com to get APP_ID and APP_KEY.
-Covers Malaysia (country code: my), UK, US, AU and more.
+Fetches from both Malaysia (my) and Singapore (sg).
 """
 import requests
 
 BASE = "https://api.adzuna.com/v1/api/jobs"
-COUNTRY = "my"   # Malaysia
+
+COUNTRIES = [
+    ("my", "Malaysia",   "RM",  "badge-orange"),
+    ("sg", "Singapore",  "SGD", "badge-blue"),
+]
+
 
 def fetch(app_id, app_key, query="", filters=None):
     filters = filters or {}
     if not app_id or not app_key:
         return []
 
+    all_jobs = []
+    for country_code, country_name, currency, badge in COUNTRIES:
+        jobs = _fetch_country(app_id, app_key, query, filters,
+                              country_code, country_name, currency, badge)
+        all_jobs.extend(jobs)
+
+    return all_jobs
+
+
+def _fetch_country(app_id, app_key, query, filters,
+                   country_code, country_name, currency, badge):
     params = {
-        "app_id":          app_id,
-        "app_key":         app_key,
+        "app_id":           app_id,
+        "app_key":          app_key,
         "results_per_page": 20,
-        "content-type":    "application/json",
-        "what":            query or "developer",
-        "sort_by":         "date",
+        "content-type":     "application/json",
+        "what":             query or "",
+        "sort_by":          "date",
     }
 
     if filters.get("location"):
@@ -29,30 +45,31 @@ def fetch(app_id, app_key, query="", filters=None):
     if filters.get("jobType"):
         type_map = {"Full-time": "permanent", "Part-time": "part_time",
                     "Contract": "contract", "Internship": "internship"}
-        params["full_time"] = type_map.get(filters["jobType"], "")
+        params["contract_time"] = type_map.get(filters["jobType"], "")
 
     try:
         resp = requests.get(
-            f"{BASE}/{COUNTRY}/search/1",
+            f"{BASE}/{country_code}/search/1",
             params=params,
             timeout=10,
         )
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
-        print(f"[Adzuna] fetch error: {e}")
+        print(f"[Adzuna/{country_code}] fetch error: {e}")
         return []
 
     jobs = []
     for j in data.get("results", []):
         salary_min = j.get("salary_min") or 0
         salary_max = j.get("salary_max") or 0
-        salary_str = (
-            f"RM {int(salary_min):,} – RM {int(salary_max):,} / month"
-            if salary_min and salary_max else "Salary not disclosed"
-        )
-        loc  = j.get("location", {}).get("display_name", "Malaysia")
-        cat  = j.get("category", {}).get("label", "")
+        if salary_min and salary_max:
+            salary_str = f"{currency} {int(salary_min):,} – {currency} {int(salary_max):,} / month"
+        else:
+            salary_str = "Salary not disclosed"
+
+        loc     = j.get("location", {}).get("display_name", country_name)
+        cat     = j.get("category", {}).get("label", "")
         company = j.get("company", {}).get("display_name", "Unknown")
 
         jobs.append({
@@ -65,7 +82,7 @@ def fetch(app_id, app_key, query="", filters=None):
             "salaryMin":    salary_min,
             "salaryMax":    salary_max,
             "source":       "Adzuna",
-            "platformBadge":"badge-orange",
+            "platformBadge": badge,
             "applyUrl":     j.get("redirect_url", "#"),
             "postedLabel":  _days_ago(j.get("created", "")),
             "logo":         _avatar(company),

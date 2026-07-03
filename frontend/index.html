@@ -753,9 +753,27 @@
     filters: { location:"", salary:"", type:"", remote:"", source:"" },
     selectedJobId: null,
     saved: new Set(),
+    recMap: {},
     authMode: savedUser ? "registered" : "guest",
     currentUser: savedUser ? JSON.parse(savedUser) : null,
   };
+
+  async function loadRecommendations() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/recommendations', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      state.recMap = {};
+      (data.recommendations || []).forEach(r => {
+        const pct = Math.min(100, r.match_score);
+        state.recMap[r.job_id] = pct;
+      });
+    } catch(e) {}
+  }
 
   /* ============ Icons ============ */
   const ICONS = {
@@ -778,9 +796,7 @@
   function initials(name){ return name.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
     function genDescription(job){
     if (job.description) {
-      const div = document.createElement('div');
-      div.innerHTML = job.description;
-      const text = div.textContent || div.innerText || '';
+      const text = job.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       return text.slice(0, 600) + (text.length > 600 ? '...' : '');
     }
     return `We're looking for a ${job.title} to join ${job.company}. This is a ${job.type.toLowerCase()} role based in ${job.location} (${job.remote.toLowerCase()}). You'll work closely with a small, focused team on real day-to-day problems.`;
@@ -798,6 +814,11 @@
   }
 
     function calcMatch(job){
+    // Use real backend score if available and > 0
+    const backendScore = state.recMap[job.id];
+    if (state.authMode === 'registered' && backendScore) {
+      return { pct: Math.min(100, backendScore), strengths: [], missing: [], fromBackend: true };
+    }
     const skills = job.skills || [];
     const total = skills.length;
     if (total === 0) return { pct: 0, strengths: [], missing: [] };
@@ -895,6 +916,7 @@
       state.currentUser = data.user;
       closeModal();
       updateNavAuthUI();
+      await loadRecommendations();
       renderAll();
 
     } catch(e){
@@ -1603,8 +1625,8 @@
   bindNav();
   bindModal();
   updateNavAuthUI();
-    loadJobs("developer").then(() => {
-    loadSavedJobs().then(() => {
+    loadJobs("").then(() => {
+    Promise.all([loadSavedJobs(), loadRecommendations()]).then(() => {
     populateFilters();
     renderSourceTrustRow();
     bindFilterBar();
