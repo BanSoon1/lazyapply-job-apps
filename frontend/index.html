@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LazyApply 鈥?Find jobs fast</title>
+<title>LazyApply -- Find jobs fast</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
@@ -541,7 +541,7 @@
 <header class="topbar">
   <div class="topbar-inner">
     <button class="logo" data-nav="home" aria-label="LazyApply home">
-      <span class="logo-mark">鈿?/span>LazyApply
+      <span class="logo-mark">&#9889;</span>LazyApply
     </button>
     <nav class="navlinks" id="navLinks">
       <button class="navlink" data-nav="home">Jobs</button>
@@ -563,7 +563,7 @@
   <div class="searchbar-inner">
     <div class="search-input">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="searchInput" placeholder="Search job title or company鈥?>
+      <input type="text" id="searchInput" placeholder="Search job title or company..." />
     </div>
     <div class="filters">
       <select id="filterLocation"><option value="">Location</option></select>
@@ -611,7 +611,7 @@
   <section id="page-ai" class="page">
     <div class="ai-page-head">
       <h1>Your AI Resume Analysis</h1>
-      <p>Based on your profile, here's how you stack up 鈥?and what to fix next.</p>
+      <p>Based on your profile, here's how you stack up --and what to fix next.</p>
     </div>
     <div id="aiLockedContent" style="display:none;"></div>
     <div id="aiRealContent">
@@ -680,7 +680,7 @@
           <div class="pref-field"><label for="prefRemote">Remote</label><select id="prefRemote"></select></div>
         </div>
         <button class="btn btn-primary btn-sm" id="savePrefsBtn" style="margin-top:16px;">Save Preferences</button>
-        <span class="job-posted" id="prefSavedMsg" style="margin-left:10px;display:none;">鉁?Preferences saved</span>
+        <span class="job-posted" id="prefSavedMsg" style="margin-left:10px;display:none;">&#10003; Preferences saved</span>
       </div>
     </div>
   </section>
@@ -698,15 +698,15 @@
     <h3 id="modalTitle">Sign in to LazyApply</h3>
     <p class="modal-sub" id="modalSub">Create a free account to unlock the full experience.</p>
     <div class="modal-benefits">
-      <div class="modal-benefit"><span style="color:var(--success);">鉁?/span> Save jobs from LinkedIn, JobStreet & more</div>
-      <div class="modal-benefit"><span style="color:var(--success);">鉁?/span> Get your AI resume match score</div>
-      <div class="modal-benefit"><span style="color:var(--success);">鉁?/span> Set preferences & get recommendations</div>
+      <div class="modal-benefit"><span style="color:var(--success);">&#10003;/span> Save jobs from LinkedIn, JobStreet & more</div>
+      <div class="modal-benefit"><span style="color:var(--success);">&#10003;/span> Get your AI resume match score</div>
+      <div class="modal-benefit"><span style="color:var(--success);">&#10003;/span> Set preferences & get recommendations</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" id="modalContinueBtn" style="justify-content:center;">Continue (Demo)</button>
       <button class="btn btn-secondary" id="modalGuestBtn" style="justify-content:center;">Continue browsing as guest</button>
     </div>
-    <p class="modal-disclaimer">Prototype demo 鈥?no real account is created.</p>
+    <p class="modal-disclaimer">Prototype demo --no real account is created.</p>
   </div>
 </div>
 
@@ -726,12 +726,12 @@
   };
 
   const SUGGESTION_COPY = {
-    "AWS":"Get hands-on with AWS 鈥?start with EC2, S3, and IAM basics.",
+    "AWS":"Get hands-on with AWS --start with EC2, S3, and IAM basics.",
     "Docker":"Learn Docker fundamentals to round out your DevOps skills.",
-    "System Design":"Practice system design 鈥?scalability, caching, and database patterns.",
+    "System Design":"Practice system design --scalability, caching, and database patterns.",
     "Kubernetes":"Explore container orchestration with Kubernetes.",
     "Java":"Brush up on core Java for backend-heavy roles.",
-    "Go":"Pick up Go basics 鈥?several backend roles list it as a plus."
+    "Go":"Pick up Go basics --several backend roles list it as a plus."
   };
 
   const SOURCES = {
@@ -887,10 +887,29 @@
   }
 
     function calcMatch(job){
-    // Use real backend score if available and > 0
+    // Use backend score if this job is in recMap
     const backendScore = state.recMap[job.id];
     if (state.authMode === 'registered' && backendScore) {
       return { pct: Math.min(100, backendScore), strengths: [], missing: [], fromBackend: true };
+    }
+    // Local scoring using user preferences (mirrors backend _score_job logic)
+    if (state.authMode === 'registered' && state.currentUser) {
+      const u = state.currentUser;
+      let score = 0;
+      if (u.preferred_location && job.location &&
+          job.location.toLowerCase().includes(u.preferred_location.toLowerCase())) {
+        score += 40;
+      }
+      if (u.preferred_job_type && job.type &&
+          u.preferred_job_type.toLowerCase() === job.type.toLowerCase()) {
+        score += 30;
+      }
+      if (state.resumeSkills && state.resumeSkills.length) {
+        const desc = (job.description || job.title || '').toLowerCase();
+        const matched = state.resumeSkills.filter(s => desc.includes(s.toLowerCase())).length;
+        score += Math.min(matched * 10, 30);
+      }
+      return { pct: Math.min(100, score), strengths: [], missing: [] };
     }
     const skills = job.skills || [];
     const total = skills.length;
@@ -1259,8 +1278,8 @@
     const remotes = [...new Set(jobs.map(j=>j.remote))];
     const salaryBuckets = [
       {label:"Below $3,000", val:"0-3000"},
-      {label:"$3,000 鈥?$5,000", val:"3000-5000"},
-      {label:"$5,000 鈥?$8,000", val:"5000-8000"},
+      {label:"$3,000 --$5,000", val:"3000-5000"},
+      {label:"$5,000 --$8,000", val:"5000-8000"},
       {label:"$8,000+", val:"8000-999999"},
     ];
     fillSelect('filterLocation', locs.map(l=>({label:l, val:l})), "Location");
@@ -1386,7 +1405,7 @@
           </div>
           <div class="score-text">
             <h3>${job.title}</h3>
-            <p>${job.company} 路 ${job.location}</p>
+            <p>${job.company} &middot; ${job.location}</p>
           </div>
         </div>
       </div>
@@ -1400,13 +1419,13 @@
         <p style="font-size:13px;color:var(--text-secondary);line-height:1.65;">${genDescription(job)}</p>
       </div>
       <a href="${originalUrl(job)}" target="_blank" rel="noopener" class="btn btn-primary" style="justify-content:center;width:100%;">
-        Find this job on ${job.source} 鈫?      </a>
+        Find this job on ${job.source} &rarr;      </a>
       <div class="divider"></div>
       <div class="teaser-wrap">
         <div class="teaser-blur">
           <div class="chip-group">
             <div class="chip-label">Strengths</div>
-            <div class="chip-row"><span class="chip chip-ok">鉁?Python</span><span class="chip chip-ok">鉁?SQL</span><span class="chip chip-missing">鉁?AWS</span></div>
+            <div class="chip-row"><span class="chip chip-ok">&#10003;Python</span><span class="chip chip-ok">&#10003;SQL</span><span class="chip chip-missing">&#10003;AWS</span></div>
           </div>
         </div>
         <div class="teaser-overlay">
@@ -1432,26 +1451,26 @@
           <div class="score-ring" style="--pct:${m.pct};"><div class="score-ring-inner">${m.pct}%</div></div>
           <div class="score-text">
             <h3>${job.title}</h3>
-            <p>${job.company} 路 Resume score ${m.pct}%</p>
+            <p>${job.company} &middot; Resume score ${m.pct}%</p>
           </div>
         </div>
       </div>
       <div class="ai-source-row">
         <span class="source-dot" style="background:${src.color};"></span>
         Found via <strong>${job.source}</strong>
-        <a href="${originalUrl(job)}" target="_blank" rel="noopener" class="ai-source-link">View original 鈫?/a>
+        <a href="${originalUrl(job)}" target="_blank" rel="noopener" class="ai-source-link">View original &rarr;</a>
       </div>
       <div class="divider"></div>
       <div class="chip-group">
         <div class="chip-label">Strengths</div>
         <div class="chip-row">
-          ${m.strengths.length ? m.strengths.map(s=>`<span class="chip chip-ok">鉁?${s}</span>`).join('') : '<span class="chip" style="color:var(--text-muted);">None yet</span>'}
+          ${m.strengths.length ? m.strengths.map(s=>`<span class="chip chip-ok">&#10003;${s}</span>`).join('') : '<span class="chip" style="color:var(--text-muted);">None yet</span>'}
         </div>
       </div>
       <div class="chip-group">
         <div class="chip-label">Missing Skills</div>
         <div class="chip-row">
-          ${m.missing.length ? m.missing.map(s=>`<span class="chip chip-missing">鉁?${s}</span>`).join('') : '<span class="chip chip-ok">鉁?Fully covered</span>'}
+          ${m.missing.length ? m.missing.map(s=>`<span class="chip chip-missing">&#10003;${s}</span>`).join('') : '<span class="chip chip-ok">&#10003;Fully covered</span>'}
         </div>
       </div>
       <div class="divider"></div>
@@ -1556,7 +1575,7 @@
       document.getElementById('savedPageCount').textContent = '';
       grid.innerHTML = `<div style="grid-column:1/-1;">${lockedStateHTML({
         title: "Sign in to view saved jobs",
-        sub: "Save jobs you find across LinkedIn, JobStreet, Indeed and more 鈥?then come back and find them all here.",
+        sub: "Save jobs you find across LinkedIn, JobStreet, Indeed and more --then come back and find them all here.",
         ctx: 'saved'
       })}</div>`;
       bindLockedCTA(grid);
@@ -1759,8 +1778,8 @@
 
     const salaryBuckets = [
       {label:"Below $3,000", val:"0-3000"},
-      {label:"$3,000 鈥?$5,000", val:"3000-5000"},
-      {label:"$5,000 鈥?$8,000", val:"5000-8000"},
+      {label:"$3,000 --$5,000", val:"3000-5000"},
+      {label:"$5,000 --$8,000", val:"5000-8000"},
       {label:"$8,000+", val:"8000-999999"},
     ];
     fillSelect('prefLocation', [...new Set(jobs.map(j=>j.location))].sort().map(l=>({label:l, val:l})), "Any location");
@@ -1802,6 +1821,10 @@
         clearTimeout(msg._hideTimer);
         msg._hideTimer = setTimeout(()=>{ msg.style.display = 'none'; }, 2500);
 
+        // Refresh match scores with new preferences, then re-render job cards
+        await loadRecommendations();
+        renderAll();
+
       } catch(e) {
         console.error('Save prefs error:', e);
       }
@@ -1831,5 +1854,6 @@
 </script>
 </body>
 </html>
+
 
 
