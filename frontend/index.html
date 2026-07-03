@@ -703,8 +703,11 @@
   let jobs = [];
 
   async function loadJobs(query = "") {
+    state.jobsLoading = true;
+    state.jobsError   = null;
     try {
       const res = await fetch(`http://127.0.0.1:5000/api/jobs/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json();
       jobs = data.jobs.map(j => ({
         id:         j.job_id,
@@ -719,10 +722,13 @@
         source:     j.source_platform || "RemoteOK",
         skills:     j.requirements || [],
         applyUrl:   j.source_url || "#",
-        }));
+      }));
     } catch(e) {
       console.error("Failed to load jobs:", e);
       jobs = [];
+      state.jobsError = "Unable to connect to server. Please make sure the backend is running.";
+    } finally {
+      state.jobsLoading = false;
     }
   }
 
@@ -977,12 +983,16 @@
     const email    = document.getElementById('authEmail')?.value || '';
     const password = document.getElementById('authPassword')?.value || '';
     const errEl    = document.getElementById('authError');
+    const btnId    = mode === 'register' ? 'authRegisterBtn' : 'authLoginBtn';
+    const btn      = document.getElementById(btnId);
 
     if (!email || !password){
       errEl.textContent = 'Email and password are required.';
       errEl.style.display = 'block';
       return;
     }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Please wait...'; }
 
     const url  = mode === 'register'
       ? 'http://127.0.0.1:5000/api/register'
@@ -1002,6 +1012,7 @@
       if (!res.ok){
         errEl.textContent = data.error || 'Something went wrong.';
         errEl.style.display = 'block';
+        if (btn) { btn.disabled = false; btn.textContent = mode === 'register' ? 'Register' : 'Login'; }
         return;
       }
 
@@ -1257,19 +1268,38 @@
   /* ============ Page renderers ============ */
   function renderHome(){
     const grid = document.getElementById('homeJobGrid');
-    grid.innerHTML = Array(4).fill(skelCardHTML()).join('');
-    setTimeout(()=>{
-      const latest = [...jobs].sort((a,b)=>a.postedDays-b.postedDays).slice(0,6);
-      document.getElementById('homeCount').textContent = `${latest.length} jobs`;
-      grid.innerHTML = latest.map(jobCardHTML).join('');
-      attachCardEvents(grid);
-    }, 250);
+    if (state.jobsLoading) {
+      grid.innerHTML = Array(4).fill(skelCardHTML()).join('');
+      return;
+    }
+    if (state.jobsError) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;color:var(--danger);">
+        <h3>Connection error</h3><p>${state.jobsError}</p></div>`;
+      document.getElementById('homeCount').textContent = '0 jobs';
+      return;
+    }
+    const latest = [...jobs].sort((a,b)=>a.postedDays-b.postedDays).slice(0,6);
+    document.getElementById('homeCount').textContent = `${latest.length} jobs`;
+    grid.innerHTML = latest.map(jobCardHTML).join('');
+    attachCardEvents(grid);
   }
 
   function renderSearch(){
     const listEl = document.getElementById('searchJobList');
-    const filtered = jobs.filter(matchesFilters).sort((a,b)=>calcMatch(b).pct - calcMatch(a).pct);
     document.getElementById('searchHeading').textContent = state.query ? `Results for "${state.query}"` : "Search results";
+
+    if (state.jobsLoading) {
+      listEl.innerHTML = Array(4).fill(skelCardHTML()).join('');
+      document.getElementById('searchCount').textContent = 'Loading...';
+      return;
+    }
+    if (state.jobsError) {
+      listEl.innerHTML = `<div class="empty-state"><h3 style="color:var(--danger);">Connection error</h3><p>${state.jobsError}</p></div>`;
+      document.getElementById('searchCount').textContent = '0 jobs';
+      return;
+    }
+
+    const filtered = jobs.filter(matchesFilters).sort((a,b)=>calcMatch(b).pct - calcMatch(a).pct);
     document.getElementById('searchCount').textContent = `${filtered.length} jobs`;
 
     if (!filtered.length){
@@ -1650,6 +1680,9 @@
         const formData = new FormData();
         formData.append('file', input.files[0]);
 
+        inner.innerHTML = `<p style="color:var(--text-secondary);">Uploading and extracting skills...</p>`;
+        dropzone.style.pointerEvents = 'none';
+
         try {
           const res = await fetch('http://127.0.0.1:5000/api/resume/', {
             method: 'POST',
@@ -1660,15 +1693,20 @@
 
           if (res.ok) {
             dropzone.classList.add('uploaded');
+            const skills = data.resume?.extracted_skills ? JSON.parse(data.resume.extracted_skills) : [];
+            const skillsText = skills.length ? `Skills detected: ${skills.slice(0,5).join(', ')}${skills.length > 5 ? '…' : ''}` : 'Resume uploaded successfully';
             inner.innerHTML = `
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <p><strong>${input.files[0].name}</strong></p>
-              <span class="job-posted" style="justify-content:center;">Resume uploaded successfully</span>`;
+              <span class="job-posted" style="justify-content:center;">${skillsText}</span>`;
+            state.resumeSkills = skills;
           } else {
             inner.innerHTML = `<p style="color:var(--danger);">${data.error || 'Upload failed'}</p>`;
           }
         } catch(e) {
           inner.innerHTML = `<p style="color:var(--danger);">Cannot connect to server.</p>`;
+        } finally {
+          dropzone.style.pointerEvents = '';
         }
       }
     });
