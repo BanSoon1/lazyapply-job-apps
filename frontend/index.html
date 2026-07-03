@@ -1740,7 +1740,7 @@
           if (res.ok) {
             dropzone.classList.add('uploaded');
             const skills = data.resume?.extracted_skills ? JSON.parse(data.resume.extracted_skills) : [];
-            const skillsText = skills.length ? `Skills detected: ${skills.slice(0,5).join(', ')}${skills.length > 5 ? '鈥? : ''}` : 'Resume uploaded successfully';
+            const skillsText = skills.length ? `Skills detected: ${skills.slice(0,5).join(', ')}${skills.length > 5 ? '...' : ''}` : 'Resume uploaded successfully';
             inner.innerHTML = `
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <p><strong>${input.files[0].name}</strong></p>
