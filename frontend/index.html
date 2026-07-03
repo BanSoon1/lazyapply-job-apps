@@ -488,6 +488,51 @@
     .score-row{flex-wrap:wrap;}
     .pref-grid{grid-template-columns:1fr;}
     .user-chip-name{display:none;}
+
+    /* Filter bar scrollable on mobile */
+    .searchbar-inner{flex-direction:column;gap:8px;padding:10px var(--space-2);}
+    .search-input{flex:1 1 100%;}
+    .filters{width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;}
+    .filters select{flex:none;min-width:120px;}
+
+    /* Home page */
+    .home-intro h1{font-size:22px;}
+    .home-intro p{font-size:14px;}
+    .source-trust-row{gap:6px;}
+    .main{padding:var(--space-2);}
+
+    /* Job card actions */
+    .job-card-bottom{flex-wrap:wrap;gap:8px;}
+    .job-card-actions{flex-wrap:wrap;}
+
+    /* AI panel */
+    .skillbar-name{width:80px;font-size:12px;}
+    .ai-page-head h1{font-size:20px;}
+
+    /* Profile */
+    .profile-card{flex-direction:column;}
+    .profile-info{width:100%;}
+
+    /* Modal */
+    .modal-card{padding:24px 16px 20px;}
+    .modal-benefits{display:none;}
+
+    /* Saved grid */
+    .job-grid{grid-template-columns:1fr;}
+  }
+
+  @media (max-width:480px){
+    .topbar-inner{gap:var(--space-2);padding:0 12px;}
+    .main{padding:12px;}
+    .card{padding:16px;}
+    .ai-panel{padding:16px;}
+    .job-card{padding:12px;}
+    .home-intro h1{font-size:19px;}
+    .btn{font-size:12px;padding:6px 10px;}
+    .section-head h2{font-size:16px;}
+    .skillbar-row{gap:8px;}
+    .skillbar-name{width:70px;font-size:11px;}
+    .skillbar-pct{width:50px;font-size:11px;}
   }
 </style>
 </head>
