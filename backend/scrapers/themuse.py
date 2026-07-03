@@ -30,8 +30,8 @@ def fetch(query="", filters=None):
 
     jobs = []
     for item in data.get("results", []):
-        title   = item.get("name", "")
-        company = item.get("company", {}).get("name", "Unknown")
+        title   = _fix_encoding(item.get("name", ""))
+        company = _fix_encoding(item.get("company", {}).get("name", "Unknown"))
         locs    = item.get("locations", [])
         location = locs[0].get("name", "Remote") if locs else "Remote"
         levels  = [l.get("name", "") for l in item.get("levels", [])]
@@ -75,6 +75,15 @@ def fetch(query="", filters=None):
         })
 
     return jobs[:30]
+
+
+def _fix_encoding(text):
+    if not text:
+        return text
+    try:
+        return text.encode('latin-1').decode('utf-8')
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        return text
 
 
 def _map_type(levels):
