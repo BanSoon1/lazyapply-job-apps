@@ -754,6 +754,7 @@
     selectedJobId: null,
     saved: new Set(),
     recMap: {},
+    resumeSkills: [],
     authMode: savedUser ? "registered" : "guest",
     currentUser: savedUser ? JSON.parse(savedUser) : null,
   };
@@ -772,6 +773,25 @@
         const pct = Math.min(100, r.match_score);
         state.recMap[r.job_id] = pct;
       });
+    } catch(e) {}
+  }
+
+  async function loadResumeSkills() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/resume/', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.resume && data.resume.extracted_skills) {
+        try {
+          state.resumeSkills = JSON.parse(data.resume.extracted_skills);
+        } catch(e) {
+          state.resumeSkills = [];
+        }
+      }
     } catch(e) {}
   }
 
@@ -1320,17 +1340,26 @@
     real.style.display = '';
     locked.style.display = 'none';
 
-    const skillOrder = ["Python","SQL","JavaScript","React","AWS","Docker","System Design"];
     const breakdown = document.getElementById('skillsBreakdown');
-    breakdown.innerHTML = skillOrder.map(s=>{
-      const pct = candidate.skills[s] || 0;
-      return `
-      <div class="skillbar-row">
-        <div class="skillbar-name">${s}</div>
-        <div class="skillbar-track"><div class="skillbar-fill${pct<50?' low':''}" data-target="${pct}" style="width:0%;"></div></div>
-        <div class="skillbar-pct">${pct}%</div>
-      </div>`;
-    }).join('');
+    if (state.resumeSkills.length > 0) {
+      breakdown.innerHTML = state.resumeSkills.slice(0, 7).map(s => `
+        <div class="skillbar-row">
+          <div class="skillbar-name">${s}</div>
+          <div class="skillbar-track"><div class="skillbar-fill" data-target="80" style="width:0%;"></div></div>
+          <div class="skillbar-pct">Detected</div>
+        </div>`).join('');
+    } else {
+      const skillOrder = ["Python","SQL","JavaScript","React","AWS","Docker","System Design"];
+      breakdown.innerHTML = skillOrder.map(s=>{
+        const pct = candidate.skills[s] || 0;
+        return `
+        <div class="skillbar-row">
+          <div class="skillbar-name">${s}</div>
+          <div class="skillbar-track"><div class="skillbar-fill${pct<50?' low':''}" data-target="${pct}" style="width:0%;"></div></div>
+          <div class="skillbar-pct">${pct}%</div>
+        </div>`;
+      }).join('');
+    }
     requestAnimationFrame(()=>{
       requestAnimationFrame(()=>{
         breakdown.querySelectorAll('.skillbar-fill').forEach(el=>{
@@ -1362,12 +1391,10 @@
       });
     });
 
-    const gapSkills = Object.entries(candidate.skills)
-      .filter(([k,v]) => SUGGESTION_COPY[k] !== undefined)
-      .sort((a,b)=>a[1]-b[1])
-      .slice(0,3)
-      .map(([k])=>k);
-    document.getElementById('suggestionList').innerHTML = gapSkills.map(s=>`
+    const suggestions = Object.keys(SUGGESTION_COPY)
+      .filter(k => !state.resumeSkills.map(s=>s.toLowerCase()).includes(k.toLowerCase()))
+      .slice(0, 3);
+    document.getElementById('suggestionList').innerHTML = suggestions.map(s=>`
       <div class="suggestion-item"><span class="suggestion-dot"></span><span>${SUGGESTION_COPY[s]}</span></div>
     `).join('');
   }
@@ -1626,7 +1653,7 @@
   bindModal();
   updateNavAuthUI();
     loadJobs("").then(() => {
-    Promise.all([loadSavedJobs(), loadRecommendations()]).then(() => {
+    Promise.all([loadSavedJobs(), loadRecommendations(), loadResumeSkills()]).then(() => {
     populateFilters();
     renderSourceTrustRow();
     bindFilterBar();
