@@ -1281,13 +1281,16 @@
 
   /* ============ Filter option population ============ */
   function populateFilters(){
-    const locs = [...new Set(jobs.map(j=>j.location))].sort();
+    // Filter out locations with non-ASCII/corrupted characters
+    const locs = [...new Set(jobs.map(j=>j.location))]
+      .filter(l => l && /^[\x20-\x7E,.\-()&']+$/.test(l))
+      .sort();
     const types = [...new Set(jobs.map(j=>j.type))];
-    const remotes = [...new Set(jobs.map(j=>j.remote))];
+    const remotes = [...new Set(jobs.map(j=>j.remote))].filter(r => r && r !== "Remote");
     const salaryBuckets = [
       {label:"Below $3,000", val:"0-3000"},
-      {label:"$3,000 --$5,000", val:"3000-5000"},
-      {label:"$5,000 --$8,000", val:"5000-8000"},
+      {label:"$3,000 - $5,000", val:"3000-5000"},
+      {label:"$5,000 - $8,000", val:"5000-8000"},
       {label:"$8,000+", val:"8000-999999"},
     ];
     fillSelect('filterLocation', locs.map(l=>({label:l, val:l})), "Location");
