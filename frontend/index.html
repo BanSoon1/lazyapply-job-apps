@@ -566,7 +566,7 @@
       <input type="text" id="searchInput" placeholder="Search job title or company..." />
     </div>
     <div class="filters">
-      <select id="filterLocation"><option value="">Location</option></select>
+      <input id="filterLocation" list="locationList" placeholder="Location" autocomplete="off" style="height:36px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);color:var(--text-primary);font-size:13px;min-width:160px;" /><datalist id="locationList"></datalist>
       <select id="filterSalary"><option value="">Salary</option></select>
       <select id="filterType"><option value="">Job Type</option></select>
       <select id="filterRemote"><option value="">Remote</option></select>
@@ -1310,7 +1310,9 @@
       {label:"$5,000 - $8,000", val:"5000-8000"},
       {label:"$8,000+", val:"8000-999999"},
     ];
-    fillSelect('filterLocation', locs.map(l=>({label:l, val:l})), "Location");
+    const dl = document.getElementById('locationList');
+    dl.innerHTML = locs.map(l=>'<option value="' + l + '"></option>').join('');
+
     fillSelect('filterType', types.map(t=>({label:t, val:t})), "Job Type");
     fillSelect('filterRemote', remotes.map(r=>({label:r, val:r})), "Remote");
     fillSelect('filterSalary', salaryBuckets, "Salary");
@@ -1349,13 +1351,20 @@
         else renderSearch();
       });
     }
-    ['filterLocation','filterSalary','filterType','filterRemote','filterSource'].forEach(id=>{
+    ['filterSalary','filterType','filterRemote','filterSource'].forEach(id=>{
       document.getElementById(id).addEventListener('change', e=>{
         const key = id.replace('filter','').toLowerCase();
         state.filters[key] = e.target.value;
         if (state.page === 'home') { navigate('search'); return; }
         renderSearch();
       });
+    });
+    // Location uses input event for live text filtering
+    document.getElementById('filterLocation').addEventListener('input', e=>{
+      const val = e.target.value.trim();
+      state.filters.location = val;
+      if (state.page === 'home') { navigate('search'); return; }
+      renderSearch();
     });
   }
 
