@@ -674,7 +674,7 @@
         <h3>Job Preferences</h3>
         <p style="color:var(--text-secondary);font-size:13px;margin:6px 0 14px;">Used to power your AI recommendations.</p>
         <div class="pref-grid">
-          <div class="pref-field"><label for="prefLocation">Preferred Location</label><select id="prefLocation"></select></div>
+          <div class="pref-field"><label for="prefLocation">Preferred Location</label><input id="prefLocation" list="prefLocationList" placeholder="e.g. Singapore" autocomplete="off" style="width:100%;height:36px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);color:var(--text-primary);font-size:13px;" /><datalist id="prefLocationList"></datalist></div>
           <div class="pref-field"><label for="prefSalary">Expected Salary</label><select id="prefSalary"></select></div>
           <div class="pref-field"><label for="prefType">Job Type</label><select id="prefType"></select></div>
           <div class="pref-field"><label for="prefRemote">Remote</label><select id="prefRemote"></select></div>
@@ -1821,7 +1821,9 @@
       {label:"$5,000 --$8,000", val:"5000-8000"},
       {label:"$8,000+", val:"8000-999999"},
     ];
-    fillSelect('prefLocation', [...new Set(jobs.map(j=>j.location))].sort().map(l=>({label:l, val:l})), "Any location");
+    const prefDl = document.getElementById('prefLocationList');
+    const prefLocs = [...new Set(jobs.map(j=>j.location))].filter(l => l && /^[\x20-\x7E,.\-()&']+$/.test(l)).sort();
+    prefDl.innerHTML = prefLocs.map(l=>'<option value="' + l + '"></option>').join('');
     fillSelect('prefSalary', salaryBuckets, "Any salary");
     fillSelect('prefType', [...new Set(jobs.map(j=>j.type))].map(t=>({label:t, val:t})), "Any type");
     fillSelect('prefRemote', [...new Set(jobs.map(j=>j.remote))].map(r=>({label:r, val:r})), "Any");
