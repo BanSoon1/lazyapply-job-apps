@@ -790,11 +790,28 @@
       });
       const data = await res.json();
       if (data.saved_jobs) {
+        state.savedJobsData = [];
         data.saved_jobs.forEach(s => {
           if (s.job && s.job.job_id) {
             state.saved.add(s.job.job_id);
             state.savedIdMap = state.savedIdMap || {};
             state.savedIdMap[s.job.job_id] = s.id;
+            state.savedJobsData.push({
+              id:         s.job.job_id,
+              title:      s.job.title,
+              company:    s.job.company,
+              location:   s.job.location   || "Remote",
+              salaryMin:  0,
+              salaryMax:  0,
+              salary:     s.job.salary     || "Salary not disclosed",
+              type:       s.job.job_type   || "Full-time",
+              remote:     "Remote",
+              postedDays: 0,
+              source:     s.job.source_platform || "RemoteOK",
+              skills:     [],
+              applyUrl:   s.job.source_url || "#",
+              description: s.job.description || "",
+            });
           }
         });
       }
@@ -1592,7 +1609,9 @@
       bindLockedCTA(grid);
       return;
     }
-    const savedJobs = jobs.filter(j=>state.saved.has(j.id));
+    const savedJobs = state.savedJobsData && state.savedJobsData.length
+      ? state.savedJobsData
+      : jobs.filter(j=>state.saved.has(j.id));
     document.getElementById('savedPageCount').textContent = savedJobs.length ? `${savedJobs.length} jobs` : '';
     if (!savedJobs.length){
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
