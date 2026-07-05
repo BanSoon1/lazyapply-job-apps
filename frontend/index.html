@@ -861,6 +861,14 @@
   }
 
   /* ============ Helpers ============ */
+  function esc(str){
+    return String(str ?? '')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
   function fmtSalary(j){
   if (!j.salaryMin && !j.salaryMax) return j.salary || "Salary not disclosed";
   return `$${j.salaryMin.toLocaleString()} - $${j.salaryMax.toLocaleString()}`;
@@ -872,7 +880,7 @@
       const text = job.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       return text.slice(0, 600) + (text.length > 600 ? '...' : '');
     }
-    return `We're looking for a ${job.title} to join ${job.company}. This is a ${job.type.toLowerCase()} role based in ${job.location} (${job.remote.toLowerCase()}). You'll work closely with a small, focused team on real day-to-day problems.`;
+    return `We're looking for a ${esc(job.title)} to join ${esc(job.company)}. This is a ${job.type.toLowerCase()} role based in ${esc(job.location)} (${job.remote.toLowerCase()}). You'll work closely with a small, focused team on real day-to-day problems.`;
   }
   function originalUrl(job){
     const bases = {
@@ -1169,8 +1177,8 @@
             <div class="source-badge" style="background:${src.color};" title="Found via ${job.source}">${src.mono}</div>
           </div>
           <div>
-            <h3>${job.title}</h3>
-            <div class="job-company">${job.company}</div>
+            <h3>${esc(job.title)}</h3>
+            <div class="job-company">${esc(job.company)}</div>
           </div>
         </div>
         ${state.authMode === 'registered'
@@ -1178,7 +1186,7 @@
           : `<div class="mini-ring locked" data-action="locked-match" data-job-id="${job.id}" title="Sign in to see your match score" aria-label="Sign in to see match score"><div class="mini-ring-inner">${lockIcon(13)}</div></div>`}
       </div>
       <div class="job-meta">
-        <span>${ICONS.pin}${job.location}</span>
+        <span>${ICONS.pin}${esc(job.location)}</span>
         <span class="job-salary">${ICONS.cash}${fmtSalary(job)}</span>
       </div>
       <div class="job-tags">
@@ -1404,8 +1412,8 @@
             <div class="source-badge" style="background:${src.color};">${src.mono}</div>
           </div>
           <div class="score-text">
-            <h3>${job.title}</h3>
-            <p>${job.company} &middot; ${job.location}</p>
+            <h3>${esc(job.title)}</h3>
+            <p>${esc(job.company)} &middot; ${esc(job.location)}</p>
           </div>
         </div>
       </div>
@@ -1450,8 +1458,8 @@
         <div class="score-row" style="margin-top:10px;">
           <div class="score-ring" style="--pct:${m.pct};"><div class="score-ring-inner">${m.pct}%</div></div>
           <div class="score-text">
-            <h3>${job.title}</h3>
-            <p>${job.company} &middot; Resume score ${m.pct}%</p>
+            <h3>${esc(job.title)}</h3>
+            <p>${esc(job.company)} &middot; Resume score ${m.pct}%</p>
           </div>
         </div>
       </div>
