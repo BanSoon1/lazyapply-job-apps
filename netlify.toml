@@ -1,2 +1,2 @@
 [build]
-  publish = "lazyapply_completed/frontend"
+  publish = "frontend"
